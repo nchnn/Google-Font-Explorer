@@ -7,7 +7,7 @@ import '../services/font_service.dart';
 /// Application-level state: navigation, theme, and font selection.
 ///
 /// Owns the cross-screen concerns that the old `_TypeStudioAppState` held
-/// inline — tab index, dark-mode flag, and the currently selected font.
+/// inline: tab index, dark-mode flag, and the currently selected font.
 /// Screens read this via [AppState.of] and only the subtree that calls
 /// [ListenableBuilder] on it rebuilds when a value changes.
 class AppState extends ChangeNotifier {
@@ -80,7 +80,7 @@ class AppState extends ChangeNotifier {
         .notifier!;
   }
 
-  /// Like [of] but does not register a dependency — avoids unnecessary rebuilds
+  /// Like [of] but does not register a dependency; avoids unnecessary rebuilds
   /// when the caller only needs to call a method (e.g. `selectFont`).
   static AppState read(BuildContext context) {
     return context
@@ -152,6 +152,18 @@ class PreviewState extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Italic style
+  // ---------------------------------------------------------------------------
+
+  bool _isItalic = false;
+  bool get isItalic => _isItalic;
+  set isItalic(bool value) {
+    if (_isItalic == value) return;
+    _isItalic = value;
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
   // Leading (line height multiplier)
   // ---------------------------------------------------------------------------
 
@@ -184,6 +196,7 @@ class PreviewState extends ChangeNotifier {
     _fontSize = defaultFontSize;
     _fontWeight = FontWeight.w400;
     _textAlign = TextAlign.left;
+    _isItalic = false;
     _leading = defaultLeading;
     _tracking = defaultTracking;
     notifyListeners();
@@ -207,7 +220,7 @@ class PreviewState extends ChangeNotifier {
 }
 
 // =============================================================================
-// InheritedNotifier wrappers — the DI mechanism
+// InheritedNotifier wrappers: the DI mechanism
 // =============================================================================
 
 class _AppStateScope extends InheritedNotifier<AppState> {

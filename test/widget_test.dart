@@ -375,7 +375,7 @@ void main() {
       expect(find.text('Font size'), findsOneWidget);
       expect(find.text('32 px'), findsOneWidget);
 
-      // Check Weight Vector
+      // Check Weight controls and discrete snapping slider
       await tester.dragUntilVisible(
         find.text('700'),
         find.byType(ListView),
@@ -383,13 +383,17 @@ void main() {
       );
       expect(find.text('Font weight'), findsOneWidget);
       expect(find.text('300'), findsOneWidget);
-      expect(find.text('500'), findsOneWidget);
       expect(find.text('700'), findsOneWidget);
 
-      // Tap weight 700
+      // Tap weight 700 to snap slider to bold
       await tester.tap(find.text('700'));
       await tester.pumpAndSettle();
       expect(find.text('Bold (700)'), findsOneWidget);
+
+      // Test Italic toggle
+      expect(find.byIcon(Icons.format_italic_rounded), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.format_italic_rounded));
+      await tester.pumpAndSettle();
 
       // Check Leading & Tracking
       await tester.dragUntilVisible(

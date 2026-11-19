@@ -6,7 +6,7 @@ import '../services/font_service.dart';
 import '../state/app_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/floating_pill_navigation.dart';
-import '../widgets/stage_telemetry_card.dart';
+import '../widgets/typography_controls_card.dart';
 
 /// Screen for testing typography settings with a fixed Live Preview header
 /// and an independently scrollable customization controls area.
@@ -30,6 +30,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
     required FontModel font,
     required double fontSize,
     required FontWeight fontWeight,
+    required bool isItalic,
     required Color color,
     required double height,
     required double letterSpacing,
@@ -37,6 +38,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
     final base = TextStyle(
       fontSize: fontSize,
       fontWeight: fontWeight,
+      fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
       color: color,
       height: height,
       letterSpacing: letterSpacing,
@@ -63,6 +65,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
       font: selectedFont,
       fontSize: preview.fontSize,
       fontWeight: preview.fontWeight,
+      isItalic: preview.isItalic,
       color: theme.colorScheme.onSurface,
       height: preview.leading,
       letterSpacing: preview.tracking * preview.fontSize,
@@ -105,113 +108,115 @@ class _PreviewScreenState extends State<PreviewScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'LIVE PREVIEW',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          if (preview.controller.text.isNotEmpty)
-                            InkWell(
-                              onTap: () => preview.controller.clear(),
-                              borderRadius: BorderRadius.circular(4),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.close_rounded,
-                                      size: 13,
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      'Clear text',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          const Spacer(),
-                          Text(
-                            selectedFont.name,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isDark ? AppColors.darkSecondarySurface : const Color(0xFFECECEC),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              selectedFont.category,
+              RepaintBoundary(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'LIVE PREVIEW',
                               style: TextStyle(
                                 fontSize: 10,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.2,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (preview.controller.text.isNotEmpty)
+                              InkWell(
+                                onTap: () => preview.controller.clear(),
+                                borderRadius: BorderRadius.circular(4),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.close_rounded,
+                                        size: 13,
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        'Clear text',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color:
+                                              theme.colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            const Spacer(),
+                            Text(
+                              selectedFont.name,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
                                 color: theme.colorScheme.onSurface,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(minHeight: 52, maxHeight: 130),
-                        child: Center(
-                          child: SingleChildScrollView(
-                            child: TextField(
-                              controller: preview.controller,
-                              textAlign: preview.textAlign,
-                              maxLines: null,
-                              cursorColor: theme.colorScheme.primary,
-                              style: previewStyle,
-                              decoration: InputDecoration(
-                                isDense: true,
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                disabledBorder: InputBorder.none,
-                                contentPadding: EdgeInsets.zero,
-                                hintText: 'Tap to type custom preview text...',
-                                hintStyle: previewStyle.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkSecondarySurface : const Color(0xFFECECEC),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                selectedFont.category,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 52, maxHeight: 130),
+                          child: Center(
+                            child: SingleChildScrollView(
+                              child: TextField(
+                                controller: preview.controller,
+                                textAlign: preview.textAlign,
+                                maxLines: null,
+                                cursorColor: theme.colorScheme.primary,
+                                style: previewStyle,
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  border: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                  hintText: 'Tap to type custom preview text...',
+                                  hintStyle: previewStyle.copyWith(
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -256,16 +261,18 @@ class _PreviewScreenState extends State<PreviewScreen> {
               ),
               children: [
                 // Typography Controls Panel
-                StageTelemetryCard(
+                TypographyControlsCard(
                   fontSize: preview.fontSize,
                   fontWeight: preview.fontWeight,
                   textAlign: preview.textAlign,
+                  isItalic: preview.isItalic,
                   leading: preview.leading,
                   tracking: preview.tracking,
                   availableWeights: selectedFont.weights,
                   onFontSizeChanged: (value) => preview.fontSize = value,
                   onFontWeightChanged: (weight) => preview.fontWeight = weight,
                   onTextAlignChanged: (align) => preview.textAlign = align,
+                  onItalicChanged: (italic) => preview.isItalic = italic,
                   onLeadingChanged: (value) => preview.leading = value,
                   onTrackingChanged: (value) => preview.tracking = value,
                 ),

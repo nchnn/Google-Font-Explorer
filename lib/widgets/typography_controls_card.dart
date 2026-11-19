@@ -8,18 +8,20 @@ import '../utils/font_weight_utils.dart';
 /// Provides intuitive controls for font size, weight, text alignment,
 /// line spacing (leading), and letter spacing (tracking/kerning) with
 /// real-time feedback and clear, accessible terminology.
-class StageTelemetryCard extends StatelessWidget {
-  const StageTelemetryCard({
+class TypographyControlsCard extends StatelessWidget {
+  const TypographyControlsCard({
     super.key,
     required this.fontSize,
     required this.fontWeight,
     required this.textAlign,
+    required this.isItalic,
     required this.leading,
     required this.tracking,
     required this.availableWeights,
     required this.onFontSizeChanged,
     required this.onFontWeightChanged,
     required this.onTextAlignChanged,
+    required this.onItalicChanged,
     required this.onLeadingChanged,
     required this.onTrackingChanged,
   });
@@ -27,6 +29,7 @@ class StageTelemetryCard extends StatelessWidget {
   final double fontSize;
   final FontWeight fontWeight;
   final TextAlign textAlign;
+  final bool isItalic;
   final double leading;
   final double tracking;
   final List<FontWeight> availableWeights;
@@ -34,6 +37,7 @@ class StageTelemetryCard extends StatelessWidget {
   final ValueChanged<double> onFontSizeChanged;
   final ValueChanged<FontWeight> onFontWeightChanged;
   final ValueChanged<TextAlign> onTextAlignChanged;
+  final ValueChanged<bool> onItalicChanged;
   final ValueChanged<double> onLeadingChanged;
   final ValueChanged<double> onTrackingChanged;
 
@@ -149,13 +153,11 @@ class StageTelemetryCard extends StatelessWidget {
           const SizedBox(height: 20),
 
           // -------------------------------------------------------------------
-          // SECTION 1: Font size (Scale)
+          // SECTION 1: Font size
           // -------------------------------------------------------------------
           _buildScaleSection(
             labelColor: labelColor,
             mutedText: mutedText,
-            readoutBg: readoutBg,
-            readoutBorder: readoutBorder,
             sliderThumb: sliderThumb,
             sliderActive: sliderActive,
             sliderInactive: sliderInactive,
@@ -163,16 +165,14 @@ class StageTelemetryCard extends StatelessWidget {
           const SizedBox(height: 20),
 
           // -------------------------------------------------------------------
-          // SECTION 2: Font weight (Weight Vector)
+          // SECTION 2: Font weight
           // -------------------------------------------------------------------
           _buildFontWeightSection(
             labelColor: labelColor,
             mutedText: mutedText,
-            bgTray: bgTray,
-            borderTray: borderTray,
-            pillActive: pillActive,
-            pillActiveBorder: pillActiveBorder,
-            isDark: isDark,
+            sliderThumb: sliderThumb,
+            sliderActive: sliderActive,
+            sliderInactive: sliderInactive,
           ),
           const SizedBox(height: 20),
 
@@ -224,85 +224,81 @@ class StageTelemetryCard extends StatelessWidget {
   Widget _buildScaleSection({
     required Color labelColor,
     required Color mutedText,
-    required Color readoutBg,
-    required Color readoutBorder,
     required Color sliderThumb,
     required Color sliderActive,
     required Color sliderInactive,
   }) {
     final currentScale = fontSize.round();
+    const checkpoints = [12, 24, 36, 48, 60];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Label & Numeric readout box
+        // Label & Numeric readout (plain text without card/container)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Font size',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: labelColor,
-                  ),
-                ),
-                Text(
-                  'Scale (pt / px)',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: mutedText,
-                  ),
-                ),
-              ],
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: readoutBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: readoutBorder),
+            Text(
+              'Font size',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: labelColor,
               ),
-              child: Text.rich(
-                TextSpan(
-                  text: '$currentScale ',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: labelColor,
-                    fontFamily: 'monospace',
-                  ),
-                  children: [
-                    TextSpan(
-                      text: 'px',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: mutedText,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  ],
+            ),
+            Text.rich(
+              TextSpan(
+                text: '$currentScale ',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: labelColor,
+                  fontFamily: 'monospace',
                 ),
+                children: [
+                  TextSpan(
+                    text: 'px',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: mutedText,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
         const SizedBox(height: 4),
 
-        // Continuous Slider with checkpoints (divisions: 60)
+        // Free continuous slider without forced snapping
         _buildCustomSlider(
-          value: fontSize.clamp(12.0, 72.0),
+          value: fontSize.clamp(12.0, 60.0),
           min: 12.0,
-          max: 72.0,
-          divisions: 60,
+          max: 60.0,
+          divisions: null,
           thumbColor: sliderThumb,
           activeColor: sliderActive,
           inactiveColor: sliderInactive,
           onChanged: onFontSizeChanged,
+        ),
+        const SizedBox(height: 4),
+
+        // Precision Positioned Rail matching slider track
+        _buildPrecisionRail(
+          checkpoints: checkpoints.map((pt) {
+            final ratio = (pt - 12.0) / (60.0 - 12.0);
+            return (
+              label: '$pt',
+              ratio: ratio,
+              isActive: currentScale == pt,
+              onTap: () => onFontSizeChanged(pt.toDouble()),
+            );
+          }).toList(),
+          activeColor: sliderActive,
+          labelColor: labelColor,
+          mutedText: mutedText,
         ),
       ],
     );
@@ -311,17 +307,18 @@ class StageTelemetryCard extends StatelessWidget {
   Widget _buildFontWeightSection({
     required Color labelColor,
     required Color mutedText,
-    required Color bgTray,
-    required Color borderTray,
-    required Color pillActive,
-    required Color pillActiveBorder,
-    required bool isDark,
+    required Color sliderThumb,
+    required Color sliderActive,
+    required Color sliderInactive,
   }) {
     final weightName = formatWeightName(fontWeight);
     final weightValue = fontWeight.value;
     final weights = availableWeights.isEmpty
         ? const [FontWeight.w400]
         : availableWeights;
+
+    final currentIndex = weights.indexOf(fontWeight);
+    final validIndex = currentIndex >= 0 ? currentIndex : 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -330,25 +327,13 @@ class StageTelemetryCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Font weight',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: labelColor,
-                  ),
-                ),
-                Text(
-                  'Weight Vector',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: mutedText,
-                  ),
-                ),
-              ],
+            Text(
+              'Font weight',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: labelColor,
+              ),
             ),
             Text(
               '$weightName ($weightValue)',
@@ -361,99 +346,107 @@ class StageTelemetryCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 4),
 
-        // Segmented Buttons based on available API weights
-        Container(
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: bgTray,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: borderTray),
-          ),
-          child: weights.length <= 6
-              ? Row(
-                  children: weights.map((weight) {
-                    final isSelected = fontWeight == weight;
-                    return Expanded(
-                      child: _buildWeightPill(
-                        weight: weight,
-                        isSelected: isSelected,
-                        pillActive: pillActive,
-                        pillActiveBorder: pillActiveBorder,
-                        isDark: isDark,
-                        labelColor: labelColor,
-                        mutedText: mutedText,
-                      ),
-                    );
-                  }).toList(),
-                )
-              : SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: weights.map((weight) {
-                      final isSelected = fontWeight == weight;
-                      return SizedBox(
-                        width: 54,
-                        child: _buildWeightPill(
-                          weight: weight,
-                          isSelected: isSelected,
-                          pillActive: pillActive,
-                          pillActiveBorder: pillActiveBorder,
-                          isDark: isDark,
-                          labelColor: labelColor,
-                          mutedText: mutedText,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
+        // Discrete Snapping Slider
+        _buildCustomSlider(
+          value: validIndex.toDouble(),
+          min: 0.0,
+          max: (weights.length > 1 ? weights.length - 1 : 1).toDouble(),
+          divisions: weights.length > 1 ? weights.length - 1 : 1,
+          thumbColor: sliderThumb,
+          activeColor: sliderActive,
+          inactiveColor: sliderInactive,
+          onChanged: weights.length > 1
+              ? (val) {
+                  final idx = val.round().clamp(0, weights.length - 1);
+                  onFontWeightChanged(weights[idx]);
+                }
+              : (val) {},
+        ),
+        const SizedBox(height: 4),
+
+        // Precision Positioned Rail matching Font size
+        _buildPrecisionRail(
+          checkpoints: List.generate(weights.length, (i) {
+            final w = weights[i];
+            final ratio = weights.length > 1
+                ? i / (weights.length - 1)
+                : 0.0;
+            return (
+              label: '${w.value}',
+              ratio: ratio,
+              isActive: fontWeight == w,
+              onTap: () => onFontWeightChanged(w),
+            );
+          }),
+          activeColor: sliderActive,
+          labelColor: labelColor,
+          mutedText: mutedText,
         ),
       ],
     );
   }
 
-  Widget _buildWeightPill({
-    required FontWeight weight,
-    required bool isSelected,
-    required Color pillActive,
-    required Color pillActiveBorder,
-    required bool isDark,
+  Widget _buildPrecisionRail({
+    required List<({String label, double ratio, bool isActive, VoidCallback onTap})> checkpoints,
+    required Color activeColor,
     required Color labelColor,
     required Color mutedText,
   }) {
-    return GestureDetector(
-      onTap: () => onFontWeightChanged(weight),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected ? pillActive : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
-          border: isSelected ? Border.all(color: pillActiveBorder) : null,
-          boxShadow: isSelected && !isDark
-              ? const [
-                  BoxShadow(
-                    color: Color(0x18000000),
-                    blurRadius: 4,
-                    offset: Offset(0, 1),
+    const double horizontalPadding = 14.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final trackWidth = constraints.maxWidth - (horizontalPadding * 2);
+
+        return SizedBox(
+          height: 24,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: checkpoints.map((cp) {
+              final centerX = horizontalPadding + (trackWidth * cp.ratio);
+
+              return Positioned(
+                left: centerX - 20,
+                width: 40,
+                top: 0,
+                child: GestureDetector(
+                  onTap: cp.onTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: cp.isActive ? 5.5 : 3.5,
+                        height: cp.isActive ? 5.5 : 3.5,
+                        decoration: BoxDecoration(
+                          color: cp.isActive
+                              ? activeColor
+                              : mutedText.withValues(alpha: 0.45),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        cp.label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight:
+                              cp.isActive ? FontWeight.w700 : FontWeight.w500,
+                          color: cp.isActive ? labelColor : mutedText,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
                   ),
-                ]
-              : null,
-        ),
-        child: Text(
-          '${weight.value}',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? labelColor : mutedText,
-            fontFamily: 'monospace',
+                ),
+              );
+            }).toList(),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -488,7 +481,7 @@ class StageTelemetryCard extends StatelessWidget {
               ),
             ),
             Text(
-              'Alignment',
+              'Alignment & Style',
               style: TextStyle(
                 fontSize: 11,
                 color: mutedText,
@@ -505,26 +498,71 @@ class StageTelemetryCard extends StatelessWidget {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: alignmentOptions.map((option) {
-              final (alignValue, iconData, tooltip) = option;
-              final isSelected = textAlign == alignValue;
+            children: [
+              ...alignmentOptions.map((option) {
+                final (alignValue, iconData, tooltip) = option;
+                final isSelected = textAlign == alignValue;
 
-              return Tooltip(
-                message: tooltip,
+                return Tooltip(
+                  message: tooltip,
+                  child: GestureDetector(
+                    onTap: () => onTextAlignChanged(alignValue),
+                    behavior: HitTestBehavior.opaque,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? pillActive : Colors.transparent,
+                        borderRadius: BorderRadius.circular(7),
+                        border: isSelected
+                            ? Border.all(color: pillActiveBorder)
+                            : null,
+                        boxShadow: isSelected && !isDark
+                            ? const [
+                                BoxShadow(
+                                  color: Color(0x18000000),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 1),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Icon(
+                        iconData,
+                        size: 16,
+                        color: isSelected ? labelColor : mutedText,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: 1,
+                height: 18,
+                color: borderTray,
+              ),
+              Tooltip(
+                message: 'Italic',
                 child: GestureDetector(
-                  onTap: () => onTextAlignChanged(alignValue),
+                  onTap: () => onItalicChanged(!isItalic),
                   behavior: HitTestBehavior.opaque,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? pillActive : Colors.transparent,
+                      color: isItalic ? pillActive : Colors.transparent,
                       borderRadius: BorderRadius.circular(7),
-                      border: isSelected
+                      border: isItalic
                           ? Border.all(color: pillActiveBorder)
                           : null,
-                      boxShadow: isSelected && !isDark
+                      boxShadow: isItalic && !isDark
                           ? const [
                               BoxShadow(
                                 color: Color(0x18000000),
@@ -535,14 +573,14 @@ class StageTelemetryCard extends StatelessWidget {
                           : null,
                     ),
                     child: Icon(
-                      iconData,
+                      Icons.format_italic_rounded,
                       size: 16,
-                      color: isSelected ? labelColor : mutedText,
+                      color: isItalic ? labelColor : mutedText,
                     ),
                   ),
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
         ),
       ],
@@ -753,6 +791,7 @@ class StageTelemetryCard extends StatelessWidget {
   }) {
     return SliderTheme(
       data: SliderThemeData(
+        trackShape: const _CustomSliderTrackShape(),
         trackHeight: 3.5,
         activeTrackColor: activeColor,
         inactiveTrackColor: inactiveColor,
@@ -780,5 +819,24 @@ class StageTelemetryCard extends StatelessWidget {
   }
 }
 
-/// Compatibility typedef
-typedef TypographyControlsCard = StageTelemetryCard;
+/// Slider track shape that precisely matches the 14px horizontal rail insets.
+class _CustomSliderTrackShape extends RoundedRectSliderTrackShape {
+  const _CustomSliderTrackShape();
+
+  @override
+  Rect getPreferredRect({
+    required RenderBox parentBox,
+    Offset offset = Offset.zero,
+    required SliderThemeData sliderTheme,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+  }) {
+    const double trackHeight = 3.5;
+    const double horizontalPadding = 14.0;
+    final double trackLeft = offset.dx + horizontalPadding;
+    final double trackTop =
+        offset.dy + (parentBox.size.height - trackHeight) / 2;
+    final double trackWidth = parentBox.size.width - (horizontalPadding * 2);
+    return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
+  }
+}
