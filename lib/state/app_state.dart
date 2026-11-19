@@ -92,9 +92,11 @@ class AppState extends ChangeNotifier {
 /// Preview-screen state: font size, weight, alignment, and custom text.
 ///
 /// Separated from [AppState] so that dragging the font-size slider only
-/// rebuilds the preview — not every screen in the app.
+/// rebuilds the preview, not every screen in the app.
 class PreviewState extends ChangeNotifier {
   static const double defaultFontSize = 32;
+  static const double defaultLeading = 1.30;
+  static const double defaultTracking = 0.00;
   static const String defaultText =
       'The quick brown fox jumps over the lazy dog.';
 
@@ -150,6 +152,30 @@ class PreviewState extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Leading (line height multiplier)
+  // ---------------------------------------------------------------------------
+
+  double _leading = defaultLeading;
+  double get leading => _leading;
+  set leading(double value) {
+    if (_leading == value) return;
+    _leading = value;
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tracking / Kerning Offset (in em units)
+  // ---------------------------------------------------------------------------
+
+  double _tracking = defaultTracking;
+  double get tracking => _tracking;
+  set tracking(double value) {
+    if (_tracking == value) return;
+    _tracking = value;
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
   // Reset
   // ---------------------------------------------------------------------------
 
@@ -158,6 +184,8 @@ class PreviewState extends ChangeNotifier {
     _fontSize = defaultFontSize;
     _fontWeight = FontWeight.w400;
     _textAlign = TextAlign.left;
+    _leading = defaultLeading;
+    _tracking = defaultTracking;
     notifyListeners();
   }
 

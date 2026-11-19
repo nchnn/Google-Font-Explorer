@@ -1,12 +1,12 @@
+import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../models/font_model.dart';
 import '../services/font_service.dart';
 import '../state/app_state.dart';
 import '../theme/app_colors.dart';
-import '../utils/font_weight_utils.dart';
 import '../widgets/floating_pill_navigation.dart';
-import '../widgets/control_card.dart';
-import '../widgets/font_text.dart';
+import '../widgets/stage_telemetry_card.dart';
 
 /// Screen for testing typography settings with a fixed Live Preview header
 /// and an independently scrollable customization controls area.
@@ -26,6 +26,31 @@ class _PreviewScreenState extends State<PreviewScreen> {
     super.dispose();
   }
 
+  TextStyle _getPreviewStyle({
+    required FontModel font,
+    required double fontSize,
+    required FontWeight fontWeight,
+    required Color color,
+    required double height,
+    required double letterSpacing,
+  }) {
+    final base = TextStyle(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+      letterSpacing: letterSpacing,
+    );
+    if (FontService.isGoogleFontsSupported(font.name)) {
+      try {
+        return GoogleFonts.getFont(font.name, textStyle: base);
+      } catch (_) {
+        return base.copyWith(fontFamily: font.name);
+      }
+    }
+    return base.copyWith(fontFamily: font.name);
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = AppState.of(context);
@@ -34,11 +59,14 @@ class _PreviewScreenState extends State<PreviewScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final selectedFont = appState.selectedFont;
 
-    final previewText = preview.controller.text.trim().isEmpty
-        ? 'The quick brown fox jumps over the lazy dog.'
-        : preview.controller.text;
-
-    final isBuiltIn = FontService.isGoogleFontsSupported(selectedFont.name);
+    final previewStyle = _getPreviewStyle(
+      font: selectedFont,
+      fontSize: preview.fontSize,
+      fontWeight: preview.fontWeight,
+      color: theme.colorScheme.onSurface,
+      height: preview.leading,
+      letterSpacing: preview.tracking * preview.fontSize,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -95,6 +123,38 @@ class _PreviewScreenState extends State<PreviewScreen> {
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          if (preview.controller.text.isNotEmpty)
+                            InkWell(
+                              onTap: () => preview.controller.clear(),
+                              borderRadius: BorderRadius.circular(4),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.close_rounded,
+                                      size: 13,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      'Clear text',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           const Spacer(),
                           Text(
                             selectedFont.name,
@@ -128,20 +188,23 @@ class _PreviewScreenState extends State<PreviewScreen> {
                         constraints: const BoxConstraints(minHeight: 52, maxHeight: 130),
                         child: Center(
                           child: SingleChildScrollView(
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 180),
-                              child: FontText(
-                                key: ValueKey(
-                                  '${selectedFont.name}-${preview.fontSize.toInt()}-${preview.fontWeight}-${preview.textAlign}-$previewText',
-                                ),
-                                fontFamily: selectedFont.name,
-                                text: previewText,
-                                textAlign: preview.textAlign,
-                                style: TextStyle(
-                                  fontSize: preview.fontSize,
-                                  fontWeight: preview.fontWeight,
-                                  color: theme.colorScheme.onSurface,
-                                  height: 1.25,
+                            child: TextField(
+                              controller: preview.controller,
+                              textAlign: preview.textAlign,
+                              maxLines: null,
+                              cursorColor: theme.colorScheme.primary,
+                              style: previewStyle,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                disabledBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                                hintText: 'Tap to type custom preview text...',
+                                hintStyle: previewStyle.copyWith(
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                                 ),
                               ),
                             ),
@@ -192,82 +255,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
                 kFloatingPillNavigationClearance + 28,
               ),
               children: [
-                // Custom Text Input Card
-                ControlCard(
-                  title: 'YOUR TEXT',
-                  trailing: '${previewText.length} characters',
-                  child: TextField(
-                    controller: preview.controller,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      hintText: 'Type something to preview...',
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Font Size Slider
-                ControlCard(
-                  title: 'Font size',
-                  trailing: '${preview.fontSize.toInt()} px',
-                  child: Slider(
-                    value: preview.fontSize,
-                    min: 12,
-                    max: 64,
-                    divisions: 52,
-                    onChanged: (value) => preview.fontSize = value,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Font Weight Selection Chips
-                ControlCard(
-                  title: 'Font weight',
-                  trailing: formatWeightName(preview.fontWeight),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: (selectedFont.weights.isEmpty
-                            ? const [FontWeight.w400]
-                            : selectedFont.weights)
-                        .map((weight) {
-                      final label = formatWeightChip(weight);
-                      final isSelected = preview.fontWeight == weight;
-                      return ChoiceChip(
-                        label: Text(label),
-                        selected: isSelected,
-                        onSelected: (_) => preview.fontWeight = weight,
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Text Alignment Controls
-                ControlCard(
-                  title: 'Text alignment',
-                  child: SegmentedButton<TextAlign>(
-                    segments: const [
-                      ButtonSegment(
-                        value: TextAlign.left,
-                        icon: Icon(Icons.format_align_left),
-                        label: Text('Left'),
-                      ),
-                      ButtonSegment(
-                        value: TextAlign.center,
-                        icon: Icon(Icons.format_align_center),
-                        label: Text('Center'),
-                      ),
-                      ButtonSegment(
-                        value: TextAlign.right,
-                        icon: Icon(Icons.format_align_right),
-                        label: Text('Right'),
-                      ),
-                    ],
-                    selected: {preview.textAlign},
-                    onSelectionChanged: (values) => preview.textAlign = values.first,
-                  ),
+                // Typography Controls Panel
+                StageTelemetryCard(
+                  fontSize: preview.fontSize,
+                  fontWeight: preview.fontWeight,
+                  textAlign: preview.textAlign,
+                  leading: preview.leading,
+                  tracking: preview.tracking,
+                  availableWeights: selectedFont.weights,
+                  onFontSizeChanged: (value) => preview.fontSize = value,
+                  onFontWeightChanged: (weight) => preview.fontWeight = weight,
+                  onTextAlignChanged: (align) => preview.textAlign = align,
+                  onLeadingChanged: (value) => preview.leading = value,
+                  onTrackingChanged: (value) => preview.tracking = value,
                 ),
                 const SizedBox(height: 16),
 

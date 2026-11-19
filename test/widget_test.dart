@@ -3,7 +3,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:type_studio/app.dart';
 import 'package:type_studio/config/google_fonts_config.dart';
 import 'package:type_studio/models/font_model.dart';
+import 'package:type_studio/screens/preview_screen.dart';
 import 'package:type_studio/services/font_service.dart';
+import 'package:type_studio/state/app_state.dart';
 import 'package:type_studio/widgets/floating_pill_navigation.dart';
 
 void main() {
@@ -152,6 +154,7 @@ void main() {
       await tester.tap(find.text('Preview'));
       await tester.pumpAndSettle();
       expect(find.byType(Scrollbar), findsOneWidget);
+      expect(find.text('Typography controls'), findsOneWidget);
       expect(find.text('Font size'), findsOneWidget);
       // Bring the weight control into view instead of hiding the fact that it
       // starts below the fold; the assertion must prove it is reachable.
@@ -337,6 +340,115 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('No matching font families found', skipOffstage: false), findsNothing);
+    });
+
+    testWidgets('Typography controls render all options and update state', (tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(const TypeStudioApp());
+      await tester.pumpAndSettle();
+
+      // Navigate to Preview tab
+      await tester.tap(find.text('Preview'));
+      await tester.pumpAndSettle();
+
+      // Check header and badge
+      expect(find.text('Typography controls'), findsOneWidget);
+      expect(find.text('REAL-TIME'), findsOneWidget);
+
+      // Verify live preview is editable and can be typed into directly
+      final previewField = find.byType(TextField).first;
+      await tester.enterText(previewField, 'Hello TypeStudio');
+      await tester.pumpAndSettle();
+      expect(find.text('Hello TypeStudio'), findsOneWidget);
+
+      // Verify clear text feature
+      expect(find.text('Clear text'), findsOneWidget);
+      await tester.tap(find.text('Clear text'));
+      await tester.pumpAndSettle();
+      expect(find.text('Clear text'), findsNothing);
+
+      // Check Font size and checkpoints
+      expect(find.text('Font size'), findsOneWidget);
+      expect(find.text('32 px'), findsOneWidget);
+
+      // Check Weight Vector
+      await tester.dragUntilVisible(
+        find.text('700'),
+        find.byType(ListView),
+        const Offset(0, -150),
+      );
+      expect(find.text('Font weight'), findsOneWidget);
+      expect(find.text('300'), findsOneWidget);
+      expect(find.text('500'), findsOneWidget);
+      expect(find.text('700'), findsOneWidget);
+
+      // Tap weight 700
+      await tester.tap(find.text('700'));
+      await tester.pumpAndSettle();
+      expect(find.text('Bold (700)'), findsOneWidget);
+
+      // Check Leading & Tracking
+      await tester.dragUntilVisible(
+        find.text('Letter spacing'),
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
+      expect(find.text('Line spacing'), findsOneWidget);
+      expect(find.text('1.30'), findsOneWidget);
+      expect(find.text('Tight (1.0)'), findsOneWidget);
+      expect(find.text('Loose (2.0)'), findsOneWidget);
+
+      expect(find.text('Letter spacing'), findsOneWidget);
+      expect(find.text('+0.00 em'), findsOneWidget);
+      expect(find.text('Normal'), findsOneWidget);
+
+      // Test reset
+      await tester.dragUntilVisible(
+        find.text('Reset preview settings'),
+        find.byType(ListView),
+        const Offset(0, -200),
+      );
+      await tester.tap(find.text('Reset preview settings'));
+      await tester.pumpAndSettle();
+
+      // Verify reset back to 32px and Regular (400)
+      expect(find.text('32 px'), findsOneWidget);
+      expect(find.text('Regular (400)'), findsOneWidget);
+    });
+
+    testWidgets('Typography controls dynamically reflect font weights from font model', (tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(const TypeStudioApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Preview'));
+      await tester.pumpAndSettle();
+
+      final context = tester.element(find.byType(PreviewScreen));
+      final appState = AppState.read(context);
+      final preview = PreviewState.read(context);
+
+      const customFont = FontModel(
+        name: 'SingleWeightFont',
+        category: 'Serif',
+        description: 'Test single weight font',
+        weights: [FontWeight.w400],
+      );
+
+      appState.selectFont(customFont, preview: preview);
+      await tester.pumpAndSettle();
+
+      expect(find.text('400'), findsOneWidget);
+      expect(find.text('300'), findsNothing);
+      expect(find.text('700'), findsNothing);
     });
   });
 }
