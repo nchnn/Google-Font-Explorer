@@ -440,6 +440,29 @@ void main() {
       expect(find.text('Regular (400)'), findsOneWidget);
     });
 
+    testWidgets('preview text field keeps a bounded height as text grows', (tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(const TypeStudioApp());
+      await settle(tester);
+
+      await tester.tap(navIcon(Icons.text_fields_rounded));
+      await settle(tester);
+
+      final field = find.byType(TextField).first;
+      final before = tester.getSize(field);
+
+      await tester.enterText(field, List.filled(120, 'word').join(' '));
+      await settle(tester);
+
+      final after = tester.getSize(field);
+      expect(before.height, 130);
+      expect(after.height, before.height);
+    });
+
     testWidgets('Typography controls dynamically reflect font weights from font model', (tester) async {
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;

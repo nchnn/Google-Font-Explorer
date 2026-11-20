@@ -100,6 +100,127 @@ class FontModel {
     return files.values.firstOrNull;
   }
 
+  /// The catalogue key used for a weight and italic combination.
+  ///
+  /// Google Fonts uses `regular`, `italic`, `700`, and `700italic`. A few
+  /// hand-written entries use `400` and `400italic`, which are accepted by
+  /// [exactFileUrl] and [hasExactFace].
+  String variantKeyFor({required int weight, required bool italic}) {
+    if (weight == 400) {
+      return italic ? 'italic' : 'regular';
+    }
+    return italic ? '${weight}italic' : '$weight';
+  }
+
+  /// Returns the URL for exactly this face, or `null` when the family does not
+  /// publish it.
+  ///
+  /// Unlike [getFileUrl], this never falls back to another weight or style, so
+  /// callers can tell a genuine variant from a substitute.
+  String? exactFileUrl({required int weight, required bool italic}) {
+    final key = variantKeyFor(weight: weight, italic: italic);
+    final url = files[key];
+    if (url != null && url.isNotEmpty) {
+      return url;
+    }
+
+    if (weight == 400) {
+      final numericKey = italic ? '400italic' : '400';
+      final numericUrl = files[numericKey];
+      if (numericUrl != null && numericUrl.isNotEmpty) {
+        return numericUrl;
+      }
+    }
+
+    return null;
+  }
+
+  /// Whether the catalogue advertises exactly this weight and italic style.
+  bool hasExactFace({required int weight, required bool italic}) {
+    if (exactFileUrl(weight: weight, italic: italic) != null) {
+      return true;
+    }
+
+    final key = variantKeyFor(weight: weight, italic: italic);
+    if (variants.contains(key)) {
+      return true;
+    }
+
+    if (weight == 400) {
+      final numericKey = italic ? '400italic' : '400';
+      return variants.contains(numericKey);
+    }
+
+    return false;
+  }
+
+  /// Whether the family publishes at least one italic face.
+  bool get hasItalicFace {
+    return variants.any(_variantIsItalic) || files.keys.any(_variantIsItalic);
+  }
+
+  /// The available weight closest to [target] for the requested style.
+  ///
+  /// Ties prefer the lighter weight. When the family publishes no face for the
+  /// requested style, [target] is returned unchanged so callers can fall back
+  /// to the regular face rather than pretending an italic file exists.
+  int closestAvailableWeight(int target, {bool italic = false}) {
+    final values = <int>{};
+
+    for (final weight in weights) {
+      values.add(weight.value);
+    }
+
+    for (final key in files.keys) {
+      if (_variantIsItalic(key) == italic) {
+        final value = _weightFromVariant(key);
+        if (value != null) {
+          values.add(value);
+        }
+      }
+    }
+
+    for (final variant in variants) {
+      if (_variantIsItalic(variant) == italic) {
+        final value = _weightFromVariant(variant);
+        if (value != null) {
+          values.add(value);
+        }
+      }
+    }
+
+    if (values.isEmpty) {
+      return target;
+    }
+
+    var best = values.first;
+    for (final value in values) {
+      final bestDistance = (best - target).abs();
+      final distance = (value - target).abs();
+      if (distance < bestDistance ||
+          (distance == bestDistance && value < best)) {
+        best = value;
+      }
+    }
+    return best;
+  }
+
+  /// Weight used as the initial face when a family is selected.
+  int get baseWeight => closestAvailableWeight(400);
+
+  static bool _variantIsItalic(String value) => value.contains('italic');
+
+  static int? _weightFromVariant(String value) {
+    final match = RegExp(r'^(\d{3})').stringMatch(value);
+    if (match != null) {
+      return int.parse(match);
+    }
+    if (value == 'regular' || value == 'italic') {
+      return 400;
+    }
+    return null;
+  }
+
   /// Parses a Google Fonts Developer API item into a [FontModel].
   factory FontModel.fromJson(Map<String, dynamic> json) {
     final family = json['family'] as String? ?? 'Unknown';

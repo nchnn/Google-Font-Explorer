@@ -92,7 +92,9 @@ class AppState extends ChangeNotifier {
 /// Preview-screen state: font size, weight, alignment, and custom text.
 ///
 /// Separated from [AppState] so that dragging the font-size slider only
-/// rebuilds the preview, not every screen in the app.
+/// rebuilds the preview, not every screen in the app. Text edits do not
+/// notify this notifier: the field listens to [controller] directly, so
+/// typing never rebuilds the controls card.
 class PreviewState extends ChangeNotifier {
   static const double defaultFontSize = 32;
   static const double defaultLeading = 1.30;
@@ -104,13 +106,8 @@ class PreviewState extends ChangeNotifier {
     text: defaultText,
   );
 
-  PreviewState() {
-    controller.addListener(notifyListeners);
-  }
-
   @override
   void dispose() {
-    controller.removeListener(notifyListeners);
     controller.dispose();
     super.dispose();
   }

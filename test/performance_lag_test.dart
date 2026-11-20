@@ -10,6 +10,7 @@ import 'package:type_studio/models/catalogue_entry.dart';
 import 'package:type_studio/models/font_model.dart';
 import 'package:type_studio/services/catalogue_store.dart';
 import 'package:type_studio/services/font_service.dart';
+import 'package:type_studio/state/app_state.dart';
 import 'package:type_studio/widgets/font_text.dart';
 
 void main() {
@@ -166,6 +167,44 @@ void main() {
       // Clean up slow future
       slowGate.complete(http.Response('abort', 404));
       await slowFuture.catchError((_) {});
+    });
+  });
+
+  group('Preview interaction cost', () {
+    test('typing in the preview controller does not notify PreviewState', () {
+      final state = PreviewState();
+      addTearDown(state.dispose);
+      var notifications = 0;
+      state.addListener(() => notifications++);
+
+      state.controller.text = 'Typing should stay local';
+      expect(notifications, 0);
+
+      state.fontSize = 40;
+      expect(notifications, 1);
+    });
+
+    test('previewStyle uses the FontLoader family for the regular face', () {
+      final service = FontService.instance;
+      service.clearCache();
+
+      const font = FontModel(
+        name: 'LoaderRegularFont',
+        category: 'Sans Serif',
+        description: 'Test',
+        weights: [FontWeight.w400],
+        files: {'regular': 'https://example.com/regular.ttf'},
+      );
+
+      final style = service.previewStyle(
+        font,
+        const TextStyle(fontSize: 32),
+        weight: FontWeight.w400,
+        italic: false,
+      );
+
+      expect(style.fontFamily, 'LoaderRegularFont');
+      expect(style.fontSize, 32);
     });
   });
 

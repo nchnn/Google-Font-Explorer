@@ -1,13 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show compute, kIsWeb, visibleForTesting;
+import 'package:flutter/foundation.dart'
+    show compute, debugPrint, kDebugMode, kIsWeb, visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:material_ui/material_ui.dart'
+    show FontStyle, FontVariation, FontWeight, TextStyle;
 
 import '../config/google_fonts_config.dart';
 import '../data/font_data.dart';
 import '../models/catalogue_entry.dart';
+import '../models/font_face.dart';
 import '../models/font_model.dart';
 import 'catalogue_store.dart';
 
@@ -69,8 +73,47 @@ class FontService {
   /// Number of font files currently held in the byte cache.
   int get cachedFontFileCount => _downloadCache.length;
 
-  /// Set of font family names successfully loaded into Flutter's [FontLoader] engine.
+  /// Family names that have at least one face registered with the engine.
+  ///
+  /// This is a convenience flag for legacy callers. It never means every face
+  /// of the family is loaded; use [isFaceLoaded] for that question.
   final Set<String> _loadedFamilies = {};
+
+  /// Genuine faces that have completed loading, keyed by [faceKey].
+  final Map<String, LoadedFontFace> _faces = {};
+
+  /// In-flight face loads, keyed by [faceKey].
+  ///
+  /// Concurrent requests for the same face share this future instead of
+  /// starting another download. Failed entries are removed so a later request
+  /// can retry.
+  final Map<String, Future<LoadedFontFace>> _pendingFaces = {};
+
+  /// Font file bytes currently being downloaded, keyed by URL.
+  final Map<String, Future<Uint8List>> _byteFetches = {};
+
+  /// Parsed variation axes for downloaded files, keyed by URL.
+  final Map<String, FontFileAxes> _fileAxes = {};
+
+  /// Family aliases already registered with Flutter's [FontLoader].
+  final Set<String> _registeredAliases = {};
+
+  /// Face keys whose cache HIT has already been logged.
+  final Set<String> _loggedFaceHits = {};
+
+  /// Face keys whose pending reuse has already been logged.
+  final Set<String> _loggedPendingHits = {};
+
+  /// Disables the `google_fonts` fallback in tests that must stay offline.
+  @visibleForTesting
+  bool debugGoogleFallbackEnabled = true;
+
+  /// Serialises `google_fonts` fallback loads.
+  ///
+  /// `GoogleFonts.pendingFonts()` waits for every pending google load, so
+  /// overlapping calls can let one family's failure surface in another. A
+  /// single queue keeps each fallback independent.
+  Future<void> _googleTail = Future<void>.value();
 
   /// Registry of known fonts (built-in + discovered from API) keyed by family name.
   final Map<String, CatalogueEntry> _entryRegistry = {};
@@ -81,18 +124,19 @@ class FontService {
   /// Cache of API catalogue lists keyed by [FontSortOrder].
   final Map<FontSortOrder, FontCatalogue> _catalogueCache = {};
 
-  /// In-flight font load operations to prevent concurrent duplicate downloads.
-  final Map<String, Future<void>> _activeFontLoads = {};
-
   /// In-flight prefetch URLs to avoid duplicate prefetch requests.
   final Set<String> _inFlightPrefetches = {};
 
-  /// Memoised preview loads keyed by font family name.
+  /// Memoised preview loads keyed by face key.
   ///
   /// Widgets call [previewFont] from `build`, so the identical future has to be
-  /// handed back for a family that is already loading (or loaded). An entry is
-  /// dropped when its future fails, which keeps a failed family retryable.
+  /// handed back for a face that is already loading (or loaded). An entry is
+  /// dropped when its future fails, which keeps a failed face retryable.
   final Map<String, Future<void>> _previewFutures = {};
+
+
+  /// Cached answers for [isGoogleFontsSupported], which is called per build.
+  static final Map<String, bool> _googleFontsSupport = {};
 
   /// Concurrency limiter for network font downloads (max 3 concurrent HTTP downloads).
   int _activeHttpDownloads = 0;
@@ -161,12 +205,51 @@ class FontService {
 
   /// Returns whether a given font family is supported by the `google_fonts` package.
   static bool isGoogleFontsSupported(String familyName) {
-    return GoogleFonts.asMap().containsKey(familyName);
+    return _googleFontsSupport.putIfAbsent(
+      familyName,
+      () => GoogleFonts.asMap().containsKey(familyName),
+    );
   }
 
-  /// Returns whether a font family has been dynamically loaded via [FontLoader].
+  /// Whether at least one face of [familyName] is loaded.
+  ///
+  /// Family level only. Check [isFaceLoaded] before assuming a specific weight
+  /// or italic face is available.
   bool isFontLoaded(String familyName) {
-    return _loadedFamilies.contains(familyName);
+    if (_loadedFamilies.contains(familyName)) {
+      return true;
+    }
+    final normalized = _normalizeFamily(familyName);
+    return _faces.values.any((face) => face.normalizedFamily == normalized);
+  }
+
+  /// Whether the exact genuine face is already loaded.
+  bool isFaceLoaded(
+    String familyName, {
+    required int weight,
+    bool italic = false,
+  }) {
+    return _faces.containsKey(faceKey(familyName, weight, italic: italic));
+  }
+
+  /// Returns the exact loaded face, or `null` when it is not cached.
+  LoadedFontFace? loadedFace(
+    String familyName, {
+    required int weight,
+    bool italic = false,
+  }) {
+    return _faces[faceKey(familyName, weight, italic: italic)];
+  }
+
+  /// Stable cache key for one genuine face.
+  ///
+  /// Example: `roboto_700_normal`, `roboto_400_italic`.
+  static String faceKey(String family, int weight, {bool italic = false}) {
+    final normalized = family
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), '_');
+    return '${normalized}_${weight}_${italic ? 'italic' : 'normal'}';
   }
 
   /// Looks up a [FontModel] in the registry by its family name.
@@ -199,6 +282,7 @@ class FontService {
     _catalogueCache.clear();
     _activeFontLoads.clear();
     _previewFutures.clear();
+    _previewStyleCache.clear();
     _inFlightPrefetches.clear();
     _entryRegistry.clear();
     _entryRegistry.addAll(_bundledRegistry);
@@ -414,6 +498,50 @@ class FontService {
       });
       return future;
     });
+  }
+
+  /// Returns a preview [TextStyle] for [font] without doing load work per call.
+  ///
+  /// The regular face of a family that has a downloadable file uses the
+  /// [FontLoader] family name, so the screen does not download the same file a
+  /// second time through `google_fonts`. Other weights and italics resolve
+  /// through `google_fonts` when the package supports the family, which keeps
+  /// real bold and italic faces instead of synthetic ones.
+  ///
+  /// The resolved family is cached per family, weight, and italic. The changing
+  /// fields from [base] (size, colour, leading, tracking) are applied on every
+  /// call, so the cache stores no per-frame state.
+  TextStyle previewStyle(
+    FontModel font,
+    TextStyle base, {
+    required FontWeight weight,
+    required bool italic,
+  }) {
+    final key = '${font.name}|${weight.value}|$italic';
+    final resolved = _previewStyleCache.putIfAbsent(key, () {
+      final fileUrl = font.getFileUrl(weight: weight, italic: italic);
+      final hasFile = fileUrl != null && fileUrl.isNotEmpty;
+      final usesLoaderRegular =
+          weight == FontWeight.w400 && !italic && hasFile;
+
+      if (!usesLoaderRegular && isGoogleFontsSupported(font.name)) {
+        try {
+          return GoogleFonts.getFont(font.name, textStyle: base);
+        } catch (_) {
+          // Fall through to the FontLoader family or system fallback.
+        }
+      }
+      return base.copyWith(fontFamily: font.name);
+    });
+
+    return resolved.copyWith(
+      fontSize: base.fontSize,
+      fontWeight: base.fontWeight,
+      fontStyle: base.fontStyle,
+      color: base.color,
+      height: base.height,
+      letterSpacing: base.letterSpacing,
+    );
   }
 
   /// Prefetches the regular-weight font bytes for [model] into the byte cache.

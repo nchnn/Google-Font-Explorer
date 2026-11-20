@@ -64,10 +64,6 @@ class TypographyControlsCard extends StatelessWidget {
         isDark ? AppColors.darkPrimaryAccent : AppColors.charcoal;
     final sliderInactive =
         isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE0E0E0);
-    final readoutBg =
-        isDark ? AppColors.darkSecondarySurface : const Color(0xFFF0F0F0);
-    final readoutBorder =
-        isDark ? AppColors.darkBorder : const Color(0xFFDFDFDF);
 
     return Container(
       decoration: BoxDecoration(

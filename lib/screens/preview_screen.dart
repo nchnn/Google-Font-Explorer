@@ -1,4 +1,3 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../models/font_model.dart';
@@ -20,10 +19,40 @@ class PreviewScreen extends StatefulWidget {
 class _PreviewScreenState extends State<PreviewScreen> {
   final ScrollController _scrollController = ScrollController();
 
+  /// Family already passed to [FontService.ensureFontLoaded] by this screen.
+  ///
+  /// `selectFont` also preloads the family. This guard stops the screen from
+  /// queueing a second load for the same family on every dependency change.
+  String? _requestedFont;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _preloadSelectedFont();
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Loads the selected family once so the preview swaps from the fallback.
+  ///
+  /// Only families with a file URL go through this path. Families without one
+  /// are resolved by `google_fonts` in [FontService.previewStyle].
+  void _preloadSelectedFont() {
+    final font = AppState.of(context).selectedFont;
+    if (_requestedFont == font.name) return;
+    _requestedFont = font.name;
+    if (font.files.isEmpty) return;
+
+    FontService.instance
+        .ensureFontLoaded(font.name, font: font)
+        .then((_) {
+          if (mounted) setState(() {});
+        })
+        .catchError((_) {});
   }
 
   TextStyle _getPreviewStyle({
@@ -35,22 +64,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
     required double height,
     required double letterSpacing,
   }) {
-    final base = TextStyle(
-      fontSize: fontSize,
-      fontWeight: fontWeight,
-      fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
-      color: color,
-      height: height,
-      letterSpacing: letterSpacing,
+    return FontService.instance.previewStyle(
+      font,
+      TextStyle(
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+        color: color,
+        height: height,
+        letterSpacing: letterSpacing,
+      ),
+      weight: fontWeight,
+      italic: isItalic,
     );
-    if (FontService.isGoogleFontsSupported(font.name)) {
-      try {
-        return GoogleFonts.getFont(font.name, textStyle: base);
-      } catch (_) {
-        return base.copyWith(fontFamily: font.name);
-      }
-    }
-    return base.copyWith(fontFamily: font.name);
   }
 
   @override
@@ -128,37 +154,45 @@ class _PreviewScreenState extends State<PreviewScreen> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            if (preview.controller.text.isNotEmpty)
-                              InkWell(
-                                onTap: () => preview.controller.clear(),
-                                borderRadius: BorderRadius.circular(4),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.close_rounded,
-                                        size: 13,
-                                        color: theme.colorScheme.onSurfaceVariant,
-                                      ),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        'Clear text',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color:
-                                              theme.colorScheme.onSurfaceVariant,
+                            ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: preview.controller,
+                              builder: (context, value, _) {
+                                if (value.text.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
+                                return InkWell(
+                                  onTap: () => preview.controller.clear(),
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.close_rounded,
+                                          size: 13,
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          'Clear text',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: theme.colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ),
+                                );
+                              },
+                            ),
                             const Spacer(),
                             Text(
                               selectedFont.name,
@@ -188,29 +222,28 @@ class _PreviewScreenState extends State<PreviewScreen> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 52, maxHeight: 130),
-                          child: Center(
-                            child: SingleChildScrollView(
-                              child: TextField(
-                                controller: preview.controller,
-                                textAlign: preview.textAlign,
-                                maxLines: null,
-                                cursorColor: theme.colorScheme.primary,
-                                style: previewStyle,
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  border: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  errorBorder: InputBorder.none,
-                                  disabledBorder: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
-                                  hintText: 'Tap to type custom preview text...',
-                                  hintStyle: previewStyle.copyWith(
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                                  ),
-                                ),
+                        SizedBox(
+                          height: 130,
+                          child: TextField(
+                            controller: preview.controller,
+                            textAlign: preview.textAlign,
+                            textAlignVertical: TextAlignVertical.top,
+                            maxLines: null,
+                            minLines: null,
+                            expands: true,
+                            cursorColor: theme.colorScheme.primary,
+                            style: previewStyle,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              border: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                              hintText: 'Tap to type custom preview text...',
+                              hintStyle: previewStyle.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                               ),
                             ),
                           ),
@@ -261,20 +294,22 @@ class _PreviewScreenState extends State<PreviewScreen> {
               ),
               children: [
                 // Typography Controls Panel
-                TypographyControlsCard(
-                  fontSize: preview.fontSize,
-                  fontWeight: preview.fontWeight,
-                  textAlign: preview.textAlign,
-                  isItalic: preview.isItalic,
-                  leading: preview.leading,
-                  tracking: preview.tracking,
-                  availableWeights: selectedFont.weights,
-                  onFontSizeChanged: (value) => preview.fontSize = value,
-                  onFontWeightChanged: (weight) => preview.fontWeight = weight,
-                  onTextAlignChanged: (align) => preview.textAlign = align,
-                  onItalicChanged: (italic) => preview.isItalic = italic,
-                  onLeadingChanged: (value) => preview.leading = value,
-                  onTrackingChanged: (value) => preview.tracking = value,
+                RepaintBoundary(
+                  child: TypographyControlsCard(
+                    fontSize: preview.fontSize,
+                    fontWeight: preview.fontWeight,
+                    textAlign: preview.textAlign,
+                    isItalic: preview.isItalic,
+                    leading: preview.leading,
+                    tracking: preview.tracking,
+                    availableWeights: selectedFont.weights,
+                    onFontSizeChanged: (value) => preview.fontSize = value,
+                    onFontWeightChanged: (weight) => preview.fontWeight = weight,
+                    onTextAlignChanged: (align) => preview.textAlign = align,
+                    onItalicChanged: (italic) => preview.isItalic = italic,
+                    onLeadingChanged: (value) => preview.leading = value,
+                    onTrackingChanged: (value) => preview.tracking = value,
+                  ),
                 ),
                 const SizedBox(height: 16),
 
