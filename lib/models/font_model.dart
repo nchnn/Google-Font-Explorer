@@ -132,6 +132,16 @@ class FontModel {
       }
     }
 
+    if (files.isEmpty) {
+      return getFileUrl(
+        weight: FontWeight.values.firstWhere(
+          (w) => w.value == weight,
+          orElse: () => FontWeight.w400,
+        ),
+        italic: italic,
+      );
+    }
+
     return null;
   }
 

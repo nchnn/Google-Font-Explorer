@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../models/font_face.dart';
 import '../theme/app_colors.dart';
 import '../utils/font_weight_utils.dart';
 
@@ -18,6 +19,7 @@ class TypographyControlsCard extends StatelessWidget {
     required this.leading,
     required this.tracking,
     required this.availableWeights,
+    this.faceStatus,
     required this.onFontSizeChanged,
     required this.onFontWeightChanged,
     required this.onTextAlignChanged,
@@ -33,6 +35,7 @@ class TypographyControlsCard extends StatelessWidget {
   final double leading;
   final double tracking;
   final List<FontWeight> availableWeights;
+  final FontFaceStatus? faceStatus;
 
   final ValueChanged<double> onFontSizeChanged;
   final ValueChanged<FontWeight> onFontWeightChanged;
@@ -169,6 +172,7 @@ class TypographyControlsCard extends StatelessWidget {
             sliderThumb: sliderThumb,
             sliderActive: sliderActive,
             sliderInactive: sliderInactive,
+            isDark: isDark,
           ),
           const SizedBox(height: 20),
 
@@ -306,6 +310,7 @@ class TypographyControlsCard extends StatelessWidget {
     required Color sliderThumb,
     required Color sliderActive,
     required Color sliderInactive,
+    required bool isDark,
   }) {
     final weightName = formatWeightName(fontWeight);
     final weightValue = fontWeight.value;
@@ -323,13 +328,22 @@ class TypographyControlsCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Font weight',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: labelColor,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Font weight',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: labelColor,
+                  ),
+                ),
+                if (faceStatus != null && faceStatus != FontFaceStatus.unloaded) ...[
+                  const SizedBox(width: 8),
+                  _buildStatusBadge(faceStatus!, isDark: isDark),
+                ],
+              ],
             ),
             Text(
               '$weightName ($weightValue)',
@@ -381,6 +395,59 @@ class TypographyControlsCard extends StatelessWidget {
           mutedText: mutedText,
         ),
       ],
+    );
+  }
+
+  Widget _buildStatusBadge(FontFaceStatus status, {required bool isDark}) {
+    final (String label, Color bg, Color text, Color border) = switch (status) {
+      FontFaceStatus.variable => (
+        'Variable',
+        isDark ? const Color(0xFF132A1C) : const Color(0xFFE6F4EA),
+        isDark ? const Color(0xFF81C995) : const Color(0xFF137333),
+        isDark ? const Color(0xFF1E462B) : const Color(0xFFCEEAD6),
+      ),
+      FontFaceStatus.actual => (
+        'Actual',
+        isDark ? const Color(0xFF172B3F) : const Color(0xFFE8F0FE),
+        isDark ? const Color(0xFF8AB4F8) : const Color(0xFF1A73E8),
+        isDark ? const Color(0xFF1E3E5E) : const Color(0xFFD2E3FC),
+      ),
+      FontFaceStatus.simulated => (
+        'Simulated',
+        isDark ? const Color(0xFF33200B) : const Color(0xFFFEF7E0),
+        isDark ? const Color(0xFFFFB74D) : const Color(0xFFB06000),
+        isDark ? const Color(0xFF4D3012) : const Color(0xFFFEEFC3),
+      ),
+      FontFaceStatus.approximate => (
+        'Approximate',
+        isDark ? const Color(0xFF262626) : const Color(0xFFF1F3F4),
+        isDark ? const Color(0xFFAAAAAA) : const Color(0xFF5F6368),
+        isDark ? const Color(0xFF383838) : const Color(0xFFDADCE0),
+      ),
+      FontFaceStatus.unloaded => (
+        'Unloaded',
+        Colors.transparent,
+        isDark ? const Color(0xFF888888) : const Color(0xFF666666),
+        Colors.transparent,
+      ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: border),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: text,
+          letterSpacing: 0.2,
+        ),
+      ),
     );
   }
 

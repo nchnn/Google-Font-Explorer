@@ -279,10 +279,15 @@ class FontService {
   void clearCache() {
     _downloadCache.clear();
     _loadedFamilies.clear();
+    _faces.clear();
+    _pendingFaces.clear();
+    _byteFetches.clear();
+    _fileAxes.clear();
+    _registeredAliases.clear();
+    _loggedFaceHits.clear();
+    _loggedPendingHits.clear();
     _catalogueCache.clear();
-    _activeFontLoads.clear();
     _previewFutures.clear();
-    _previewStyleCache.clear();
     _inFlightPrefetches.clear();
     _entryRegistry.clear();
     _entryRegistry.addAll(_bundledRegistry);
@@ -421,13 +426,59 @@ class FontService {
     }
   }
 
-  /// Ensures that a font family is loaded and ready for rendering in Flutter.
+  /// Ensures that an exact font face is loaded and registered.
   ///
-  /// Chooses the engine in this order:
-  /// 1. If the family's [FontModel.files] has a URL -> [_loadCustomFont] (FontLoader).
-  ///    Each family completes independently and never calls `GoogleFonts.pendingFonts()`.
-  /// 2. Otherwise, if `google_fonts` supports it -> existing google_fonts path.
-  /// 3. Otherwise -> missing-URL error with Retry.
+  /// Faces are cached by family, weight, and italic style. Concurrent requests
+  /// for the same face share one download, and a failed face is never cached so
+  /// the caller can retry. A variable face already loaded for the family is
+  /// reused for other weights instead of downloading a separate file.
+  Future<LoadedFontFace> ensureFace(
+    FontModel font, {
+    required int weight,
+    bool italic = false,
+  }) {
+    final key = faceKey(font.name, weight, italic: italic);
+
+    final cached = _faces[key];
+    if (cached != null) {
+      if (_loggedFaceHits.add(key)) {
+        _logFace('HIT', key);
+      }
+      return Future.value(cached);
+    }
+
+    final pending = _pendingFaces[key];
+    if (pending != null) {
+      if (_loggedPendingHits.add(key)) {
+        _logFace('REUSE_PENDING', key);
+      }
+      return pending;
+    }
+
+    _logFace('LOADING', key);
+    final future = _loadFace(font, weight: weight, italic: italic).then((face) {
+      final stored = face.forRequest(weight: weight, italic: italic);
+      _faces[key] = stored;
+      _logFace('LOADED', key, detail: stored.registeredFamily);
+      return stored;
+    });
+
+    _pendingFaces[key] = future;
+    future.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace _) {
+        _logFace('FAILED', key, detail: '$error');
+      },
+    ).whenComplete(() {
+      if (identical(_pendingFaces[key], future)) {
+        _pendingFaces.remove(key);
+      }
+    });
+
+    return future;
+  }
+
+  /// Legacy family-level loader kept for callers that only need a face ready.
   Future<void> ensureFontLoaded(
     String familyName, {
     FontModel? font,
@@ -435,112 +486,235 @@ class FontService {
     bool italic = false,
   }) async {
     final targetFont = font ?? getFont(familyName);
-    final fileUrl = targetFont?.getFileUrl(weight: weight, italic: italic);
 
-    // 1. If font has a downloadable file URL -> FontLoader path
-    if (fileUrl != null && fileUrl.isNotEmpty) {
-      if (_loadedFamilies.contains(familyName)) {
+    if (targetFont != null) {
+      await ensureFace(
+        targetFont,
+        weight: weight.value,
+        italic: italic,
+      );
+      return;
+    }
+
+    if (debugGoogleFallbackEnabled && isGoogleFontsSupported(familyName)) {
+      final key = faceKey(familyName, weight.value, italic: italic);
+      final existing = _faces[key];
+      if (existing != null) {
         return;
       }
-
-      if (_activeFontLoads.containsKey(familyName)) {
-        return _activeFontLoads[familyName]!;
+      final pending = _pendingFaces[key];
+      if (pending != null) {
+        await pending;
+        return;
       }
-
-      final loadFuture = _loadCustomFont(
+      final future = _loadGoogleFace(
         familyName,
-        fileUrl: fileUrl,
+        null,
+        weight: weight.value,
+        italic: italic,
       );
-
-      _activeFontLoads[familyName] = loadFuture;
-
+      _pendingFaces[key] = future;
       try {
-        await loadFuture;
+        _faces[key] = await future;
       } finally {
-        _activeFontLoads.remove(familyName);
+        if (identical(_pendingFaces[key], future)) {
+          _pendingFaces.remove(key);
+        }
       }
       return;
     }
 
-    // 2. Otherwise, if google_fonts supports it -> google_fonts path
-    if (isGoogleFontsSupported(familyName)) {
-      try {
-        GoogleFonts.getFont(familyName);
-        await GoogleFonts.pendingFonts();
-        return;
-      } catch (_) {
-        // Fall through
-      }
-    }
-
-    // 3. Otherwise -> missing-URL error with Retry
     throw FontApiException(
       'No font file URL available for "$familyName" to load via FontLoader.',
     );
   }
 
-  /// Loads the regular weight of [familyName] for a preview, memoised per family.
+  /// Loads the regular weight of [familyName] for a preview, memoised per face.
   ///
   /// Widgets call this from `build`, so repeat calls must return the identical
   /// [Future] object instead of queuing another load. A failed load removes its
-  /// entry, so the next call retries the family rather than caching the error.
+  /// entry, so the next call retries the face rather than caching the error.
   Future<void> previewFont(String familyName, {FontModel? font}) {
-    return _previewFutures.putIfAbsent(familyName, () {
+    final key = faceKey(familyName, 400);
+    return _previewFutures.putIfAbsent(key, () {
       final future = ensureFontLoaded(
         familyName,
         font: font,
         weight: FontWeight.w400,
       );
-      future.catchError((Object _, StackTrace _) {
-        if (identical(_previewFutures[familyName], future)) {
-          _previewFutures.remove(familyName);
-        }
-      });
+      future.then<void>(
+        (_) {},
+        onError: (Object _, StackTrace __) {
+          if (identical(_previewFutures[key], future)) {
+            _previewFutures.remove(key);
+          }
+        },
+      );
       return future;
     });
   }
 
+  /// Resolves the best face to render for a weight and italic request.
+  ///
+  /// Reads only the loaded-face cache, so it is safe to call during `build` and
+  /// never starts a download. The result distinguishes genuine, variable,
+  /// simulated, and approximate previews.
+  FontFacePreview resolvePreviewFace(
+    FontModel font, {
+    required int weight,
+    bool italic = false,
+  }) {
+    final normalized = _normalizeFamily(font.name);
+    final faces = _faces.values
+        .where((face) => face.normalizedFamily == normalized)
+        .toList();
+
+    if (faces.isEmpty) {
+      return FontFacePreview(
+        status: FontFaceStatus.unloaded,
+        family: font.name,
+        renderWeight: weight,
+        renderItalic: italic,
+        simulatedWeight: true,
+        simulatedItalic: italic,
+      );
+    }
+
+    LoadedFontFace? exact;
+    for (final face in faces) {
+      if (face.requestedWeight == weight &&
+          face.requestedItalic == italic) {
+        exact = face;
+        break;
+      }
+    }
+    if (exact == null) {
+      for (final face in faces) {
+        if (face.actualWeight == weight && face.actualItalic == italic) {
+          exact = face;
+          break;
+        }
+      }
+    }
+    if (exact != null) {
+      return _previewFromFace(
+        font,
+        font.name,
+        exact,
+        weight: weight,
+        italic: italic,
+      );
+    }
+
+    if (italic) {
+      for (final face in faces) {
+        if (face.italicAxis != null) {
+          return _previewFromFace(
+            font,
+            font.name,
+            face,
+            weight: weight,
+            italic: true,
+          );
+        }
+      }
+      for (final face in faces) {
+        if (face.actualItalic) {
+          return _previewFromFace(
+            font,
+            font.name,
+            face,
+            weight: weight,
+            italic: true,
+          );
+        }
+      }
+    }
+
+    for (final face in faces) {
+      if (face.weightAxis != null &&
+          (face.requestedItalic == italic || face.actualItalic == italic)) {
+        return _previewFromFace(
+          font,
+          font.name,
+          face,
+          weight: weight,
+          italic: italic,
+        );
+      }
+    }
+    for (final face in faces) {
+      if (face.weightAxis != null) {
+        return _previewFromFace(
+          font,
+          font.name,
+          face,
+          weight: weight,
+          italic: italic,
+        );
+      }
+    }
+
+    final nearest = _nearestFace(font.name, weight, italic);
+    return _previewFromFace(
+      font,
+      font.name,
+      nearest!,
+      weight: weight,
+      italic: italic,
+    );
+  }
+
   /// Returns a preview [TextStyle] for [font] without doing load work per call.
   ///
-  /// The regular face of a family that has a downloadable file uses the
-  /// [FontLoader] family name, so the screen does not download the same file a
-  /// second time through `google_fonts`. Other weights and italics resolve
-  /// through `google_fonts` when the package supports the family, which keeps
-  /// real bold and italic faces instead of synthetic ones.
-  ///
-  /// The resolved family is cached per family, weight, and italic. The changing
-  /// fields from [base] (size, colour, leading, tracking) are applied on every
-  /// call, so the cache stores no per-frame state.
+  /// The registered family comes from the loaded-face cache. Variable faces get
+  /// a `FontVariation` for the requested weight instead of a new download, and
+  /// static faces use the closest loaded face with a clear status on the screen.
   TextStyle previewStyle(
     FontModel font,
     TextStyle base, {
     required FontWeight weight,
     required bool italic,
   }) {
-    final key = '${font.name}|${weight.value}|$italic';
-    final resolved = _previewStyleCache.putIfAbsent(key, () {
-      final fileUrl = font.getFileUrl(weight: weight, italic: italic);
-      final hasFile = fileUrl != null && fileUrl.isNotEmpty;
-      final usesLoaderRegular =
-          weight == FontWeight.w400 && !italic && hasFile;
+    final preview = resolvePreviewFace(
+      font,
+      weight: weight.value,
+      italic: italic,
+    );
+    return _applyPreview(base, preview);
+  }
 
-      if (!usesLoaderRegular && isGoogleFontsSupported(font.name)) {
-        try {
-          return GoogleFonts.getFont(font.name, textStyle: base);
-        } catch (_) {
-          // Fall through to the FontLoader family or system fallback.
-        }
-      }
-      return base.copyWith(fontFamily: font.name);
-    });
+  /// Like [previewStyle] but works for google-only families without a model.
+  TextStyle previewStyleForFamily(
+    String familyName,
+    TextStyle base, {
+    required FontWeight weight,
+    required bool italic,
+  }) {
+    final model = getFont(familyName);
+    if (model != null) {
+      return previewStyle(
+        model,
+        base,
+        weight: weight,
+        italic: italic,
+      );
+    }
 
-    return resolved.copyWith(
-      fontSize: base.fontSize,
-      fontWeight: base.fontWeight,
-      fontStyle: base.fontStyle,
-      color: base.color,
-      height: base.height,
-      letterSpacing: base.letterSpacing,
+    final face = _nearestFace(familyName, weight.value, italic);
+    if (face == null) {
+      return base.copyWith(fontFamily: familyName);
+    }
+
+    return _applyPreview(
+      base,
+      _previewFromFace(
+        null,
+        familyName,
+        face,
+        weight: weight.value,
+        italic: italic,
+      ),
     );
   }
 
@@ -548,14 +722,13 @@ class FontService {
   ///
   /// Does not call `FontLoader.load`. Best-effort and swallows errors.
   Future<void> prefetchPreviewBytes(FontModel model) async {
-    final fileUrl = model.getFileUrl(weight: FontWeight.w400, italic: false);
+    final fileUrl = model.exactFileUrl(weight: 400, italic: false) ??
+        model.getFileUrl(weight: FontWeight.w400, italic: false);
     if (fileUrl == null || fileUrl.isEmpty) {
       return;
     }
 
-    final secureUrl = fileUrl.startsWith('http://')
-        ? 'https://${fileUrl.substring(7)}'
-        : fileUrl;
+    final secureUrl = _secureUrl(fileUrl);
 
     if (_cachedFontBytes(secureUrl) != null) {
       return;
@@ -588,51 +761,428 @@ class FontService {
     }
   }
 
-  Future<void> _loadCustomFont(
-    String familyName, {
-    required String fileUrl,
+  /// Loads one requested face, preferring genuine catalogue files.
+  Future<LoadedFontFace> _loadFace(
+    FontModel font, {
+    required int weight,
+    bool italic = false,
   }) async {
-    final secureUrl = fileUrl.startsWith('http://')
-        ? 'https://${fileUrl.substring(7)}'
-        : fileUrl;
+    final variableBase = _findVariableBase(font.name, italic);
+    if (variableBase != null) {
+      return variableBase.forRequest(weight: weight, italic: italic);
+    }
 
-    Uint8List fontBytes;
-
-    final cachedBytes = _cachedFontBytes(secureUrl);
-    if (cachedBytes != null) {
-      fontBytes = cachedBytes;
-    } else {
-      await _acquireDownloadSlot();
+    final exactUrl = font.exactFileUrl(weight: weight, italic: italic);
+    Object? exactError;
+    if (exactUrl != null) {
       try {
-        final racedBytes = _cachedFontBytes(secureUrl);
-        if (racedBytes != null) {
-          fontBytes = racedBytes;
-        } else {
-          final response = await _httpGet(
-            Uri.parse(secureUrl),
-            timeout: const Duration(seconds: 20),
-          );
-
-          if (response.statusCode != 200) {
-            throw FontApiException(
-              'Failed to download font file for "$familyName" (HTTP ${response.statusCode}).',
-              statusCode: response.statusCode,
-            );
-          }
-
-          fontBytes = response.bodyBytes;
-          _putFontBytes(secureUrl, fontBytes);
-        }
-      } finally {
-        _releaseDownloadSlot();
+        return await _loadFaceFile(
+          font,
+          weight: weight,
+          italic: italic,
+          url: exactUrl,
+          registrationWeight: weight,
+          registrationItalic: italic,
+        );
+      } catch (error) {
+        exactError = error;
       }
     }
 
-    final fontLoader = FontLoader(familyName);
-    fontLoader.addFont(Future.value(ByteData.view(fontBytes.buffer)));
-    await fontLoader.load();
+    if (debugGoogleFallbackEnabled && isGoogleFontsSupported(font.name)) {
+      try {
+        return await _loadGoogleFace(
+          font.name,
+          font,
+          weight: weight,
+          italic: italic,
+        );
+      } catch (_) {
+        // Fall back to the closest catalogue face or the regular face.
+      }
+    }
 
-    _loadedFamilies.add(familyName);
+    final fallback = await _loadFallbackFace(
+      font,
+      weight: weight,
+      italic: italic,
+    );
+    if (fallback != null) {
+      return fallback;
+    }
+
+    if (exactError is FontApiException) {
+      throw exactError;
+    }
+    throw FontApiException(
+      'No font file URL available for "${font.name}" at weight '
+      '$weight${italic ? ' italic' : ''} to load via FontLoader.',
+    );
+  }
+
+  /// Uses an already loaded or downloadable face close to the request.
+  Future<LoadedFontFace?> _loadFallbackFace(
+    FontModel font, {
+    required int weight,
+    required bool italic,
+  }) async {
+    final closest = font.closestAvailableWeight(weight, italic: italic);
+    if (closest != weight) {
+      final existing = _faces[faceKey(font.name, closest, italic: italic)];
+      if (existing != null) {
+        return existing.forRequest(weight: weight, italic: italic);
+      }
+      final url = font.exactFileUrl(weight: closest, italic: italic);
+      if (url != null) {
+        return _loadFaceFile(
+          font,
+          weight: weight,
+          italic: italic,
+          url: url,
+          registrationWeight: closest,
+          registrationItalic: italic,
+        );
+      }
+    }
+
+    if (weight == 400 && !italic) {
+      return null;
+    }
+
+    final baseWeight = font.closestAvailableWeight(400);
+    final existingBase = _faces[faceKey(font.name, baseWeight)];
+    if (existingBase != null) {
+      return existingBase.forRequest(weight: weight, italic: italic);
+    }
+
+    final baseUrl = font.exactFileUrl(weight: baseWeight, italic: false);
+    if (baseUrl != null && (baseWeight != weight || italic)) {
+      return _loadFaceFile(
+        font,
+        weight: weight,
+        italic: italic,
+        url: baseUrl,
+        registrationWeight: baseWeight,
+        registrationItalic: false,
+      );
+    }
+
+    return null;
+  }
+
+  Future<LoadedFontFace> _loadFaceFile(
+    FontModel font, {
+    required int weight,
+    required bool italic,
+    required String url,
+    required int registrationWeight,
+    required bool registrationItalic,
+  }) async {
+    final secureUrl = _secureUrl(url);
+    final bytes = await _fontBytesFor(secureUrl, font.name);
+    final axes = _fileAxes.putIfAbsent(
+      secureUrl,
+      () => FontFileAxes.parse(bytes),
+    );
+
+    final alias = _aliasFor(
+      font.name,
+      registrationWeight,
+      registrationItalic,
+    );
+    if (!_registeredAliases.contains(alias)) {
+      final fontLoader = FontLoader(alias);
+      fontLoader.addFont(Future.value(ByteData.sublistView(bytes)));
+      await fontLoader.load();
+      _registeredAliases.add(alias);
+      _loadedFamilies.add(alias);
+      if (registrationWeight == 400 && !registrationItalic) {
+        _loadedFamilies.add(font.name);
+      }
+    }
+
+    return LoadedFontFace(
+      family: font.name,
+      requestedWeight: weight,
+      requestedItalic: italic,
+      registeredFamily: alias,
+      actualWeight: registrationWeight,
+      actualItalic: registrationItalic,
+      axes: axes,
+      fileUrl: secureUrl,
+    );
+  }
+
+  Future<LoadedFontFace> _loadGoogleFace(
+    String familyName,
+    FontModel? font, {
+    required int weight,
+    required bool italic,
+  }) {
+    return _runGoogleSerialized(() async {
+      final style = GoogleFonts.getFont(
+        familyName,
+        fontWeight: _weightFromNumber(weight),
+        fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+      );
+      await GoogleFonts.pendingFonts();
+
+      final registeredFamily = style.fontFamily;
+      if (registeredFamily == null || registeredFamily.isEmpty) {
+        throw FontApiException(
+          'Google Fonts did not resolve a family for "$familyName".',
+        );
+      }
+
+      return LoadedFontFace(
+        family: familyName,
+        requestedWeight: weight,
+        requestedItalic: italic,
+        registeredFamily: registeredFamily,
+        fallbacks: style.fontFamilyFallback ?? const [],
+        actualWeight: _googleAliasWeight(registeredFamily),
+        actualItalic: registeredFamily.endsWith('italic'),
+        fromGoogleFonts: true,
+      );
+    });
+  }
+
+  /// Serialises google_fonts fallbacks so one failure cannot block another.
+  Future<T> _runGoogleSerialized<T>(Future<T> Function() action) {
+    final result = Completer<T>();
+    final previous = _googleTail;
+    _googleTail = result.future.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
+
+    previous.whenComplete(() {
+      action().then(result.complete, onError: result.completeError);
+    });
+
+    return result.future;
+  }
+
+  Future<Uint8List> _fontBytesFor(String secureUrl, String family) {
+    final cached = _cachedFontBytes(secureUrl);
+    if (cached != null) {
+      return Future.value(cached);
+    }
+
+    final existing = _byteFetches[secureUrl];
+    if (existing != null) {
+      return existing;
+    }
+
+    final future = _downloadFontBytes(secureUrl, family);
+    _byteFetches[secureUrl] = future;
+    future.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    ).whenComplete(() {
+      if (identical(_byteFetches[secureUrl], future)) {
+        _byteFetches.remove(secureUrl);
+      }
+    });
+    return future;
+  }
+
+  Future<Uint8List> _downloadFontBytes(
+    String secureUrl,
+    String family,
+  ) async {
+    final cached = _cachedFontBytes(secureUrl);
+    if (cached != null) {
+      return cached;
+    }
+
+    await _acquireDownloadSlot();
+    try {
+      final raced = _cachedFontBytes(secureUrl);
+      if (raced != null) {
+        return raced;
+      }
+
+      final response = await _httpGet(
+        Uri.parse(secureUrl),
+        timeout: const Duration(seconds: 20),
+      );
+      if (response.statusCode != 200) {
+        throw FontApiException(
+          'Failed to download font file for "$family" (HTTP ${response.statusCode}).',
+          statusCode: response.statusCode,
+        );
+      }
+
+      final bytes = response.bodyBytes;
+      _putFontBytes(secureUrl, bytes);
+      return bytes;
+    } finally {
+      _releaseDownloadSlot();
+    }
+  }
+
+  LoadedFontFace? _findVariableBase(String family, bool italic) {
+    final normalized = _normalizeFamily(family);
+    if (!italic) {
+      for (final face in _faces.values) {
+        if (face.normalizedFamily == normalized && face.weightAxis != null) {
+          return face;
+        }
+      }
+      return null;
+    }
+
+    for (final face in _faces.values) {
+      if (face.normalizedFamily == normalized && face.italicAxis != null) {
+        return face;
+      }
+    }
+    for (final face in _faces.values) {
+      if (face.normalizedFamily == normalized &&
+          face.weightAxis != null &&
+          face.actualItalic) {
+        return face;
+      }
+    }
+    return null;
+  }
+
+  LoadedFontFace? _nearestFace(String family, int weight, bool italic) {
+    final normalized = _normalizeFamily(family);
+    final candidates = _faces.values
+        .where((face) => face.normalizedFamily == normalized)
+        .toList();
+    if (candidates.isEmpty) {
+      return null;
+    }
+
+    candidates.sort((a, b) {
+      final aScore = (a.actualWeight - weight).abs() * 2 +
+          (a.actualItalic == italic ? 0 : 1000);
+      final bScore = (b.actualWeight - weight).abs() * 2 +
+          (b.actualItalic == italic ? 0 : 1000);
+      return aScore.compareTo(bScore);
+    });
+    return candidates.first;
+  }
+
+  FontFacePreview _previewFromFace(
+    FontModel? font,
+    String familyName,
+    LoadedFontFace face, {
+    required int weight,
+    required bool italic,
+  }) {
+    final axis = face.weightAxis;
+    final renderWeight = axis == null
+        ? weight
+        : axis.clamp(weight.toDouble()).round();
+    final actualMatch = face.actualWeight == weight && face.actualItalic == italic;
+    final hasExact = font?.hasExactFace(weight: weight, italic: italic) ?? false;
+    final googleSupported = isGoogleFontsSupported(familyName);
+
+    final FontFaceStatus status;
+    if (axis != null) {
+      status = FontFaceStatus.variable;
+    } else if (actualMatch) {
+      status = FontFaceStatus.actual;
+    } else if (hasExact || googleSupported) {
+      status = FontFaceStatus.simulated;
+    } else {
+      status = FontFaceStatus.approximate;
+    }
+
+    return FontFacePreview(
+      status: status,
+      face: face,
+      family: face.registeredFamily,
+      fallbacks: face.fallbacks,
+      renderWeight: renderWeight,
+      renderItalic: italic,
+      weightAxis: axis,
+      italicAxis: face.italicAxis,
+      actualWeight: face.actualWeight,
+      actualItalic: face.actualItalic,
+      simulatedWeight: axis == null && face.actualWeight != weight,
+      simulatedItalic: italic && !face.actualItalic && face.italicAxis == null,
+    );
+  }
+
+  TextStyle _applyPreview(TextStyle base, FontFacePreview preview) {
+    final variations = <FontVariation>[
+      if (preview.weightAxis != null)
+        FontVariation('wght', preview.renderWeight.toDouble()),
+      if (preview.renderItalic && preview.italicAxis != null)
+        const FontVariation('ital', 1),
+    ];
+
+    return base.copyWith(
+      fontFamily: preview.family,
+      fontFamilyFallback: preview.fallbacks,
+      fontWeight: _weightFromNumber(preview.renderWeight),
+      fontStyle:
+          preview.renderItalic ? FontStyle.italic : FontStyle.normal,
+      fontVariations: variations,
+      fontSize: base.fontSize,
+      color: base.color,
+      height: base.height,
+      letterSpacing: base.letterSpacing,
+    );
+  }
+
+  /// Inserts a face into the cache for tests that cannot run `FontLoader`.
+  @visibleForTesting
+  void debugCacheFace(LoadedFontFace face) {
+    _faces[faceKey(
+      face.family,
+      face.requestedWeight,
+      italic: face.requestedItalic,
+    )] = face;
+  }
+
+  static String _normalizeFamily(String family) =>
+      family.trim().toLowerCase();
+
+  static String _secureUrl(String url) {
+    return url.startsWith('http://')
+        ? 'https://${url.substring(7)}'
+        : url;
+  }
+
+  static String _aliasFor(String family, int weight, bool italic) {
+    if (weight == 400 && !italic) {
+      return family;
+    }
+    return '${family}__ts_$weight${italic ? 'i' : ''}';
+  }
+
+  static int _googleAliasWeight(String alias) {
+    final separator = alias.lastIndexOf('_');
+    final variant = separator == -1 ? alias : alias.substring(separator + 1);
+    if (variant == 'regular' || variant == 'italic' || variant.isEmpty) {
+      return 400;
+    }
+    final match = RegExp(r'^(\d{3})').stringMatch(variant);
+    return match == null ? 400 : int.parse(match);
+  }
+
+  static FontWeight _weightFromNumber(int weight) {
+    for (final w in FontWeight.values) {
+      if (w.value == weight) return w;
+    }
+    return FontWeight.w400;
+  }
+
+  static void _logFace(String event, String key, {String? detail}) {
+    if (!kDebugMode) {
+      return;
+    }
+    debugPrint(
+      detail == null
+          ? '[FontFace] $event $key'
+          : '[FontFace] $event $key ($detail)',
+    );
   }
 }
 
