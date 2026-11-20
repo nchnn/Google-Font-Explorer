@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:material_ui/material_ui.dart';
 
 import '../models/font_face.dart';
@@ -21,10 +19,6 @@ class PreviewScreen extends StatefulWidget {
 
 class _PreviewScreenState extends State<PreviewScreen> {
   final ScrollController _scrollController = ScrollController();
-  Timer? _settleTimer;
-  String? _scheduledFamily;
-  FontWeight? _scheduledWeight;
-  bool? _scheduledItalic;
 
   /// Family already passed to [FontService.ensureFontLoaded] by this screen.
   ///
@@ -40,7 +34,6 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   @override
   void dispose() {
-    _settleTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -61,48 +54,6 @@ class _PreviewScreenState extends State<PreviewScreen> {
           if (mounted) setState(() {});
         })
         .catchError((_) {});
-  }
-
-  void _scheduleVariantLoadIfNeeded(
-    FontModel font,
-    FontWeight weight,
-    bool isItalic,
-    FontFacePreview previewFace,
-  ) {
-    if (previewFace.status != FontFaceStatus.simulated &&
-        previewFace.status != FontFaceStatus.approximate) {
-      _settleTimer?.cancel();
-      _settleTimer = null;
-      _scheduledFamily = font.name;
-      _scheduledWeight = weight;
-      _scheduledItalic = isItalic;
-      return;
-    }
-
-    if (_scheduledFamily == font.name &&
-        _scheduledWeight == weight &&
-        _scheduledItalic == isItalic) {
-      return;
-    }
-
-    _scheduledFamily = font.name;
-    _scheduledWeight = weight;
-    _scheduledItalic = isItalic;
-
-    _settleTimer?.cancel();
-    _settleTimer = Timer(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      FontService.instance
-          .ensureFace(
-            font,
-            weight: weight.value,
-            italic: isItalic,
-          )
-          .then((_) {
-            if (mounted) setState(() {});
-          })
-          .catchError((_) {});
-    });
   }
 
   TextStyle _getPreviewStyle({
@@ -141,13 +92,6 @@ class _PreviewScreenState extends State<PreviewScreen> {
       selectedFont,
       weight: preview.fontWeight.value,
       italic: preview.isItalic,
-    );
-
-    _scheduleVariantLoadIfNeeded(
-      selectedFont,
-      preview.fontWeight,
-      preview.isItalic,
-      previewFace,
     );
 
     final previewStyle = _getPreviewStyle(

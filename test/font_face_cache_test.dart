@@ -327,5 +327,65 @@ void main() {
       expect(boldFace.requestedWeight, 700);
       expect(boldFace.registeredFamily, baseFace.registeredFamily);
     });
+
+    test('static font preview changes weight and italic without triggering downloads', () async {
+      var fetchCount = 0;
+      service.debugHttpClient = MockClient((request) async {
+        fetchCount++;
+        return http.Response.bytes(Uint8List.fromList([1, 2, 3, 4]), 200);
+      });
+
+      const font = FontModel(
+        name: 'StaticOutfit',
+        category: 'Sans Serif',
+        description: 'Test',
+        weights: [
+          FontWeight.w100,
+          FontWeight.w200,
+          FontWeight.w300,
+          FontWeight.w400,
+          FontWeight.w500,
+          FontWeight.w600,
+          FontWeight.w700,
+          FontWeight.w800,
+          FontWeight.w900,
+        ],
+        files: {
+          'regular': 'https://example.com/outfit_regular.ttf',
+          '700': 'https://example.com/outfit_700.ttf',
+          '900': 'https://example.com/outfit_900.ttf',
+        },
+      );
+      service.registerFonts([font]);
+
+      // 1. Initial selection loads only the default/base face (400)
+      await service.ensureFontLoaded(font.name, font: font);
+      expect(fetchCount, 1, reason: 'Initial load must download only the base face');
+
+      // 2. Client-side preview for any weight/italic combination
+      const testWeights = [
+        FontWeight.w100,
+        FontWeight.w300,
+        FontWeight.w500,
+        FontWeight.w700,
+        FontWeight.w900,
+      ];
+
+      for (final w in testWeights) {
+        for (final italic in [false, true]) {
+          final style = service.previewStyle(
+            font,
+            const TextStyle(fontSize: 24),
+            weight: w,
+            italic: italic,
+          );
+          expect(style.fontWeight, w);
+          expect(style.fontStyle, italic ? FontStyle.italic : FontStyle.normal);
+        }
+      }
+
+      // 3. Verify zero network downloads occurred during customization
+      expect(fetchCount, 1, reason: 'Changing weight and italic must trigger zero additional downloads');
+    });
   });
 }
