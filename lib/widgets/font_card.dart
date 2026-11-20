@@ -46,11 +46,17 @@ class FontCard extends StatelessWidget {
                     ),
                   ),
                   if (isSelected)
-                    Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary, size: 20)
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    )
                   else
                     Icon(
                       Icons.circle_outlined,
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.4,
+                      ),
                       size: 20,
                     ),
                 ],
@@ -59,9 +65,14 @@ class FontCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSecondarySurface : const Color(0xFFEBEBEB),
+                      color: isDark
+                          ? AppColors.darkSecondarySurface
+                          : const Color(0xFFEBEBEB),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -77,7 +88,10 @@ class FontCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       font.variantsLabel,
-                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 11),
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -101,7 +115,10 @@ class FontCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 font.description,
-                style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

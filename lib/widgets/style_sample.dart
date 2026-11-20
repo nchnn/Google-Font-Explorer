@@ -30,7 +30,10 @@ class StyleSample extends StatelessWidget {
             width: 94,
             child: Text(
               '$label\n${size.toInt()} px',
-              style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 11,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           Expanded(

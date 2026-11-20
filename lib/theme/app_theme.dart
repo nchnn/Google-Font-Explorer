@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+
 import 'app_colors.dart';
 
 class AppTheme {
@@ -68,7 +69,9 @@ class AppTheme {
             return AppColors.surface;
           }),
           foregroundColor: WidgetStateProperty.all(AppColors.primaryText),
-          side: WidgetStateProperty.all(const BorderSide(color: AppColors.border)),
+          side: WidgetStateProperty.all(
+            const BorderSide(color: AppColors.border),
+          ),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -151,7 +154,10 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.darkPrimaryAccent, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.darkPrimaryAccent,
+            width: 1.5,
+          ),
         ),
       ),
       sliderTheme: SliderThemeData(
@@ -169,13 +175,18 @@ class AppTheme {
             return AppColors.darkSurface;
           }),
           foregroundColor: WidgetStateProperty.all(AppColors.darkPrimaryText),
-          side: WidgetStateProperty.all(const BorderSide(color: AppColors.darkBorder)),
+          side: WidgetStateProperty.all(
+            const BorderSide(color: AppColors.darkBorder),
+          ),
         ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.darkSecondarySurface,
         selectedColor: AppColors.darkBorder,
-        labelStyle: const TextStyle(fontSize: 12, color: AppColors.darkPrimaryText),
+        labelStyle: const TextStyle(
+          fontSize: 12,
+          color: AppColors.darkPrimaryText,
+        ),
         side: const BorderSide(color: AppColors.darkBorder),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),

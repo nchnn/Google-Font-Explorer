@@ -63,7 +63,8 @@ void main() {
     });
 
     test('returns none for non-TrueType signatures (such as WOFF or text)', () {
-      final woffBytes = Uint8List(32)..buffer.asByteData().setUint32(0, 0x774F4646);
+      final woffBytes = Uint8List(32)
+        ..buffer.asByteData().setUint32(0, 0x774F4646);
       expect(FontFileAxes.parse(woffBytes), FontFileAxes.none);
     });
 
@@ -103,7 +104,10 @@ void main() {
     test('faceKey produces normalized, consistent keys', () {
       expect(FontService.faceKey('Roboto', 400), 'roboto_400_normal');
       expect(FontService.faceKey('Open Sans', 700), 'open_sans_700_normal');
-      expect(FontService.faceKey('Merriweather', 400, italic: true), 'merriweather_400_italic');
+      expect(
+        FontService.faceKey('Merriweather', 400, italic: true),
+        'merriweather_400_italic',
+      );
     });
 
     test('resolvePreviewFace returns unloaded when cache is empty', () {
@@ -165,7 +169,12 @@ void main() {
         name: 'TestVariable',
         category: 'Sans Serif',
         description: 'Test',
-        weights: [FontWeight.w100, FontWeight.w400, FontWeight.w700, FontWeight.w900],
+        weights: [
+          FontWeight.w100,
+          FontWeight.w400,
+          FontWeight.w700,
+          FontWeight.w900,
+        ],
       );
 
       // Request weight 700 without loading a 700 file
@@ -222,78 +231,92 @@ void main() {
       service.debugGoogleFallbackEnabled = true;
     });
 
-    test('ensureFace deduplicates in-flight downloads for identical requests', () async {
-      var fetchCount = 0;
-      final completer = Completer<http.Response>();
+    test(
+      'ensureFace deduplicates in-flight downloads for identical requests',
+      () async {
+        var fetchCount = 0;
+        final completer = Completer<http.Response>();
 
-      service.debugHttpClient = MockClient((request) async {
-        fetchCount++;
-        return completer.future;
-      });
+        service.debugHttpClient = MockClient((request) async {
+          fetchCount++;
+          return completer.future;
+        });
 
-      const font = FontModel(
-        name: 'DedupeFont',
-        category: 'Sans Serif',
-        description: 'Test',
-        weights: [FontWeight.w400],
-        files: {'regular': 'https://example.com/dedupe.ttf'},
-      );
-      service.registerFonts([font]);
+        const font = FontModel(
+          name: 'DedupeFont',
+          category: 'Sans Serif',
+          description: 'Test',
+          weights: [FontWeight.w400],
+          files: {'regular': 'https://example.com/dedupe.ttf'},
+        );
+        service.registerFonts([font]);
 
-      // Fire two simultaneous requests for the same face
-      final f1 = service.ensureFace(font, weight: 400);
-      final f2 = service.ensureFace(font, weight: 400);
+        // Fire two simultaneous requests for the same face
+        final f1 = service.ensureFace(font, weight: 400);
+        final f2 = service.ensureFace(font, weight: 400);
 
-      // Yield to let the async download slot acquisition fire the HTTP call
-      await Future<void>.delayed(Duration.zero);
-      expect(fetchCount, 1, reason: 'Only one network request should be initiated');
+        // Yield to let the async download slot acquisition fire the HTTP call
+        await Future<void>.delayed(Duration.zero);
+        expect(
+          fetchCount,
+          1,
+          reason: 'Only one network request should be initiated',
+        );
 
-      completer.complete(
-        http.Response.bytes(Uint8List.fromList([1, 2, 3, 4]), 200),
-      );
+        completer.complete(
+          http.Response.bytes(Uint8List.fromList([1, 2, 3, 4]), 200),
+        );
 
-      final r1 = await f1;
-      final r2 = await f2;
+        final r1 = await f1;
+        final r2 = await f2;
 
-      expect(r1.family, font.name);
-      expect(r2.family, font.name);
+        expect(r1.family, font.name);
+        expect(r2.family, font.name);
 
-      // Third request is an instant cache hit
-      final r3 = await service.ensureFace(font, weight: 400);
-      expect(fetchCount, 1, reason: 'Cache hit should not make network calls');
-      expect(r3.registeredFamily, r1.registeredFamily);
-    });
+        // Third request is an instant cache hit
+        final r3 = await service.ensureFace(font, weight: 400);
+        expect(
+          fetchCount,
+          1,
+          reason: 'Cache hit should not make network calls',
+        );
+        expect(r3.registeredFamily, r1.registeredFamily);
+      },
+    );
 
-    test('failed face load cleans up pending map so subsequent call can retry', () async {
-      var attempts = 0;
-      service.debugHttpClient = MockClient((request) async {
-        attempts++;
-        if (attempts == 1) {
-          return http.Response('Server Error', 500);
-        }
-        return http.Response.bytes(Uint8List.fromList([1, 2, 3, 4]), 200);
-      });
+    test(
+      'failed face load cleans up pending map so subsequent call can retry',
+      () async {
+        var attempts = 0;
+        service.debugHttpClient = MockClient((request) async {
+          attempts++;
+          if (attempts == 1) {
+            return http.Response('Server Error', 500);
+          }
+          return http.Response.bytes(Uint8List.fromList([1, 2, 3, 4]), 200);
+        });
 
-      const font = FontModel(
-        name: 'RetryFont',
-        category: 'Sans Serif',
-        description: 'Test',
-        weights: [FontWeight.w400],
-        files: {'regular': 'https://example.com/retry.ttf'},
-      );
-      service.registerFonts([font]);
+        const font = FontModel(
+          name: 'RetryFont',
+          category: 'Sans Serif',
+          description: 'Test',
+          weights: [FontWeight.w400],
+          files: {'regular': 'https://example.com/retry.ttf'},
+        );
+        service.registerFonts([font]);
 
-      // First attempt fails
-      await expectLater(
-        service.ensureFace(font, weight: 400),
-        throwsA(isA<FontApiException>()),
-      );
+        // First attempt fails
+        await expectLater(
+          service.ensureFace(font, weight: 400),
+          throwsA(isA<FontApiException>()),
+        );
 
-      // Second attempt retries and succeeds
-      final face = await service.ensureFace(font, weight: 400);
-      expect(attempts, 2);
-      expect(face.family, font.name);
-    });
+        // Second attempt retries and succeeds
+        final face = await service.ensureFace(font, weight: 400);
+        expect(attempts, 2);
+        expect(face.family, font.name);
+      },
+    );
 
     test('ensureFace reuses cached variable face without downloading separate weights', () async {
       var fetchCount = 0;
@@ -308,7 +331,12 @@ void main() {
         name: 'VarFamily',
         category: 'Sans Serif',
         description: 'Test',
-        weights: [FontWeight.w100, FontWeight.w400, FontWeight.w700, FontWeight.w900],
+        weights: [
+          FontWeight.w100,
+          FontWeight.w400,
+          FontWeight.w700,
+          FontWeight.w900,
+        ],
         files: {
           'regular': 'https://example.com/var.ttf',
           '700': 'https://example.com/var_700.ttf',
@@ -323,7 +351,11 @@ void main() {
 
       // Request 700: should reuse variable base and perform zero additional downloads
       final boldFace = await service.ensureFace(font, weight: 700);
-      expect(fetchCount, 1, reason: 'Variable font face must be reused without new downloads');
+      expect(
+        fetchCount,
+        1,
+        reason: 'Variable font face must be reused without new downloads',
+      );
       expect(boldFace.requestedWeight, 700);
       expect(boldFace.registeredFamily, baseFace.registeredFamily);
     });
@@ -360,7 +392,11 @@ void main() {
 
       // 1. Initial selection loads only the default/base face (400)
       await service.ensureFontLoaded(font.name, font: font);
-      expect(fetchCount, 1, reason: 'Initial load must download only the base face');
+      expect(
+        fetchCount,
+        1,
+        reason: 'Initial load must download only the base face',
+      );
 
       // 2. Client-side preview for any weight/italic combination
       const testWeights = [
@@ -385,7 +421,49 @@ void main() {
       }
 
       // 3. Verify zero network downloads occurred during customization
-      expect(fetchCount, 1, reason: 'Changing weight and italic must trigger zero additional downloads');
+      expect(
+        fetchCount,
+        1,
+        reason:
+            'Changing weight and italic must trigger zero additional downloads',
+      );
     });
+
+    test(
+      'ensureFace fetches static face when variant is requested on settle',
+      () async {
+        var fetchCount = 0;
+        service.debugHttpClient = MockClient((request) async {
+          fetchCount++;
+          return http.Response.bytes(Uint8List.fromList([1, 2, 3, 4]), 200);
+        });
+
+        const font = FontModel(
+          name: 'StaticThinTest',
+          category: 'Sans Serif',
+          description: 'Test',
+          weights: [FontWeight.w100, FontWeight.w400],
+          files: {
+            'regular': 'https://example.com/regular.ttf',
+            '100': 'https://example.com/100.ttf',
+          },
+        );
+        service.registerFonts([font]);
+
+        // Initially only 400 is loaded
+        await service.ensureFontLoaded(font.name, font: font);
+        expect(fetchCount, 1);
+
+        // On settle at 100, ensureFace fetches the genuine 100 face
+        final face100 = await service.ensureFace(font, weight: 100);
+        expect(fetchCount, 2);
+        expect(face100.actualWeight, 100);
+
+        // Subsequent resolution uses the actual 100 face
+        final preview = service.resolvePreviewFace(font, weight: 100);
+        expect(preview.status, FontFaceStatus.actual);
+        expect(preview.actualWeight, 100);
+      },
+    );
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../models/font_face.dart';
@@ -19,6 +21,10 @@ class PreviewScreen extends StatefulWidget {
 
 class _PreviewScreenState extends State<PreviewScreen> {
   final ScrollController _scrollController = ScrollController();
+  Timer? _settleTimer;
+  String? _scheduledFamily;
+  FontWeight? _scheduledWeight;
+  bool? _scheduledItalic;
 
   /// Family already passed to [FontService.ensureFontLoaded] by this screen.
   ///
@@ -34,6 +40,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   @override
   void dispose() {
+    _settleTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -54,6 +61,48 @@ class _PreviewScreenState extends State<PreviewScreen> {
           if (mounted) setState(() {});
         })
         .catchError((_) {});
+  }
+
+  void _scheduleVariantLoadIfNeeded(
+    FontModel font,
+    FontWeight weight,
+    bool isItalic,
+  ) {
+    final previewFace = FontService.instance.resolvePreviewFace(
+      font,
+      weight: weight.value,
+      italic: isItalic,
+    );
+    if (previewFace.status != FontFaceStatus.simulated &&
+        previewFace.status != FontFaceStatus.approximate) {
+      _settleTimer?.cancel();
+      _settleTimer = null;
+      _scheduledFamily = font.name;
+      _scheduledWeight = weight;
+      _scheduledItalic = isItalic;
+      return;
+    }
+
+    if (_scheduledFamily == font.name &&
+        _scheduledWeight == weight &&
+        _scheduledItalic == isItalic) {
+      return;
+    }
+
+    _scheduledFamily = font.name;
+    _scheduledWeight = weight;
+    _scheduledItalic = isItalic;
+
+    _settleTimer?.cancel();
+    _settleTimer = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      FontService.instance
+          .ensureFace(font, weight: weight.value, italic: isItalic)
+          .then((_) {
+            if (mounted) setState(() {});
+          })
+          .catchError((_) {});
+    });
   }
 
   TextStyle _getPreviewStyle({
@@ -88,10 +137,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final selectedFont = appState.selectedFont;
 
-    final previewFace = FontService.instance.resolvePreviewFace(
+    _scheduleVariantLoadIfNeeded(
       selectedFont,
-      weight: preview.fontWeight.value,
-      italic: preview.isItalic,
+      preview.fontWeight,
+      preview.isItalic,
     );
 
     final previewStyle = _getPreviewStyle(
@@ -182,7 +231,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
                                           Icons.close_rounded,
                                           size: 13,
                                           color: theme
-                                              .colorScheme.onSurfaceVariant,
+                                              .colorScheme
+                                              .onSurfaceVariant,
                                         ),
                                         const SizedBox(width: 3),
                                         Text(
@@ -190,7 +240,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
-                                            color: theme.colorScheme
+                                            color: theme
+                                                .colorScheme
                                                 .onSurfaceVariant,
                                           ),
                                         ),
@@ -211,9 +262,14 @@ class _PreviewScreenState extends State<PreviewScreen> {
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: isDark ? AppColors.darkSecondarySurface : const Color(0xFFECECEC),
+                                color: isDark
+                                    ? AppColors.darkSecondarySurface
+                                    : const Color(0xFFECECEC),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -250,7 +306,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
                               contentPadding: EdgeInsets.zero,
                               hintText: 'Tap to type custom preview text...',
                               hintStyle: previewStyle.copyWith(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.3,
+                                ),
                               ),
                             ),
                           ),
@@ -273,7 +331,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
             color: theme.dividerColor,
             boxShadow: [
               BoxShadow(
-                color: theme.shadowColor.withValues(alpha: isDark ? 0.35 : 0.08),
+                color: theme.shadowColor.withValues(
+                  alpha: isDark ? 0.35 : 0.08,
+                ),
                 offset: const Offset(0, 2),
                 blurRadius: 4,
               ),
@@ -310,9 +370,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
                     leading: preview.leading,
                     tracking: preview.tracking,
                     availableWeights: selectedFont.weights,
-                    faceStatus: previewFace.status,
                     onFontSizeChanged: (value) => preview.fontSize = value,
-                    onFontWeightChanged: (weight) => preview.fontWeight = weight,
+                    onFontWeightChanged: (weight) =>
+                        preview.fontWeight = weight,
                     onTextAlignChanged: (align) => preview.textAlign = align,
                     onItalicChanged: (italic) => preview.isItalic = italic,
                     onLeadingChanged: (value) => preview.leading = value,

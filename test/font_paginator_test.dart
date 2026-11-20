@@ -5,11 +5,11 @@ import 'package:type_studio/models/font_model.dart';
 import 'package:type_studio/services/font_paginator.dart';
 
 FontModel _font(String name) => FontModel(
-      name: name,
-      category: 'Sans Serif',
-      description: 'd',
-      weights: const [FontWeight.w400],
-    );
+  name: name,
+  category: 'Sans Serif',
+  description: 'd',
+  weights: const [FontWeight.w400],
+);
 
 List<FontModel> _fonts(int count) =>
     List.generate(count, (i) => _font('Font ${i + 1}'));
@@ -33,12 +33,15 @@ void main() {
     expect(p.hasMore, isFalse);
   });
 
-  test('loadNextPage on an exhausted paginator throws and does not grow', () async {
-    final p = FontPaginator<FontModel>(idOf: (f) => f.name)..reset(_fonts(5));
-    expect(p.hasMore, isFalse);
-    await expectLater(p.loadNextPage(), throwsStateError);
-    expect(p.visibleCount, 5);
-  });
+  test(
+    'loadNextPage on an exhausted paginator throws and does not grow',
+    () async {
+      final p = FontPaginator<FontModel>(idOf: (f) => f.name)..reset(_fonts(5));
+      expect(p.hasMore, isFalse);
+      await expectLater(p.loadNextPage(), throwsStateError);
+      expect(p.visibleCount, 5);
+    },
+  );
 
   test('reset rewinds and discards the previous source', () async {
     final p = FontPaginator<FontModel>(idOf: (f) => f.name)..reset(_fonts(12));
@@ -58,10 +61,12 @@ void main() {
   });
 
   test('empty and short sources behave', () {
-    final empty = FontPaginator<FontModel>(idOf: (f) => f.name)..reset(const []);
+    final empty = FontPaginator<FontModel>(idOf: (f) => f.name)
+      ..reset(const []);
     expect(empty.isEmpty, isTrue);
     expect(empty.hasMore, isFalse);
-    final short = FontPaginator<FontModel>(idOf: (f) => f.name)..reset(_fonts(2));
+    final short = FontPaginator<FontModel>(idOf: (f) => f.name)
+      ..reset(_fonts(2));
     expect(short.visibleCount, 2);
     expect(short.hasMore, isFalse);
   });
@@ -84,8 +89,11 @@ void main() {
     p.reset(_fonts(9)); // newer source wins
     final slice = await pending;
     expect(slice, isEmpty);
-    expect(p.visibleCount, 5,
-        reason: 'the stale batch must not advance the new cursor');
+    expect(
+      p.visibleCount,
+      5,
+      reason: 'the stale batch must not advance the new cursor',
+    );
     expect(p.totalCount, 9);
   });
 }

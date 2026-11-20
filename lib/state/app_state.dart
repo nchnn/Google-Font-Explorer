@@ -83,9 +83,7 @@ class AppState extends ChangeNotifier {
   /// Like [of] but does not register a dependency; avoids unnecessary rebuilds
   /// when the caller only needs to call a method (e.g. `selectFont`).
   static AppState read(BuildContext context) {
-    return context
-        .getInheritedWidgetOfExactType<_AppStateScope>()!
-        .notifier!;
+    return context.getInheritedWidgetOfExactType<_AppStateScope>()!.notifier!;
   }
 }
 
@@ -222,12 +220,14 @@ class PreviewState extends ChangeNotifier {
 
 class _AppStateScope extends InheritedNotifier<AppState> {
   const _AppStateScope({required AppState notifier, required super.child})
-      : super(notifier: notifier);
+    : super(notifier: notifier);
 }
 
 class _PreviewStateScope extends InheritedNotifier<PreviewState> {
-  const _PreviewStateScope({required PreviewState notifier, required super.child})
-      : super(notifier: notifier);
+  const _PreviewStateScope({
+    required PreviewState notifier,
+    required super.child,
+  }) : super(notifier: notifier);
 }
 
 /// Provides [AppState] and [PreviewState] to the subtree.
@@ -264,10 +264,7 @@ class _AppStateProviderState extends State<AppStateProvider> {
   Widget build(BuildContext context) {
     return _AppStateScope(
       notifier: _appState,
-      child: _PreviewStateScope(
-        notifier: _previewState,
-        child: widget.child,
-      ),
+      child: _PreviewStateScope(notifier: _previewState, child: widget.child),
     );
   }
 }

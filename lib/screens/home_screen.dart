@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 
 import '../data/font_data.dart';
+import '../models/font_model.dart';
 import '../state/app_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/floating_pill_navigation.dart';
@@ -58,10 +59,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 420),
     );
     _heroFade = CurvedAnimation(parent: _heroController, curve: Curves.easeOut);
-    _heroSlide = Tween<Offset>(
-      begin: const Offset(0, 0.18),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _heroController, curve: Curves.easeOutCubic));
+    _heroSlide = Tween<Offset>(begin: const Offset(0, 0.18), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _heroController, curve: Curves.easeOutCubic),
+        );
     _heroController.forward();
 
     _heroWordTimer = Timer(const Duration(milliseconds: 2400), _cycleHeroWord);
@@ -103,7 +104,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       });
       _heroController.forward().then((_) {
         if (!mounted) return;
-        _heroWordTimer = Timer(const Duration(milliseconds: 2400), _cycleHeroWord);
+        _heroWordTimer = Timer(
+          const Duration(milliseconds: 2400),
+          _cycleHeroWord,
+        );
       });
     });
   }
@@ -148,9 +152,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               const SizedBox(height: 20),
               _section(2, _buildStatsAndCta(appState, theme, isDark)),
               const SizedBox(height: 32),
-              _section(3, _buildSelectedCard(appState, theme, isDark, selectedFont)),
+              _section(
+                3,
+                _buildSelectedCard(appState, theme, isDark, selectedFont),
+              ),
               const SizedBox(height: 32),
-              _section(4, _buildFontShelf(appState, theme, isDark, selectedFont)),
+              _section(
+                4,
+                _buildFontShelf(appState, theme, isDark, selectedFont),
+              ),
               const SizedBox(height: 32),
               _section(5, _buildTypographyRamp(theme, isDark, selectedFont)),
             ]),
@@ -175,16 +185,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.border,
+            ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? AppColors.shadowAmbientDark : AppColors.shadowAmbientLight,
+                color: isDark
+                    ? AppColors.shadowAmbientDark
+                    : AppColors.shadowAmbientLight,
                 blurRadius: 10,
                 offset: const Offset(0, 3),
               ),
             ],
           ),
-          child: const Icon(Icons.text_fields_rounded, color: Colors.white, size: 22),
+          child: const Icon(
+            Icons.text_fields_rounded,
+            color: Colors.white,
+            size: 22,
+          ),
         ),
         const SizedBox(width: 12),
         Column(
@@ -213,9 +231,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         const Spacer(),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSecondarySurface : const Color(0xFFEEEEEE),
+            color: isDark
+                ? AppColors.darkSecondarySurface
+                : const Color(0xFFEEEEEE),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.border,
+            ),
           ),
           child: IconButton(
             onPressed: appState.toggleTheme,
@@ -232,9 +254,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildHero(ThemeData theme, bool isDark, dynamic selectedFont) {
-    final accentColor =
-        isDark ? const Color(0xFF7B7BFF) : const Color(0xFF4B4BDF);
+  Widget _buildHero(ThemeData theme, bool isDark, FontModel selectedFont) {
+    final accentColor = isDark
+        ? const Color(0xFF7B7BFF)
+        : const Color(0xFF4B4BDF);
 
     return SizedBox(
       height: 200,
@@ -278,7 +301,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        (isDark ? AppColors.darkPrimaryAccent : AppColors.charcoal)
+                        (isDark
+                                ? AppColors.darkPrimaryAccent
+                                : AppColors.charcoal)
                             .withValues(alpha: isDark ? 0.08 : 0.05),
                         Colors.transparent,
                       ],
@@ -381,10 +406,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     AppState appState,
     ThemeData theme,
     bool isDark,
-    dynamic selectedFont,
+    FontModel selectedFont,
   ) {
     final shadowAmbient = BoxShadow(
-      color: isDark ? AppColors.shadowAmbientDark : AppColors.shadowAmbientLight,
+      color: isDark
+          ? AppColors.shadowAmbientDark
+          : AppColors.shadowAmbientLight,
       blurRadius: 20,
       offset: const Offset(0, 4),
     );
@@ -393,19 +420,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       blurRadius: 8,
       offset: const Offset(0, 6),
     );
-    final highlightBorder =
-        isDark ? AppColors.glassHighlightDark : AppColors.glassHighlightLight;
+    final highlightBorder = isDark
+        ? AppColors.glassHighlightDark
+        : AppColors.glassHighlightLight;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionLabel(title: 'Current font', subtitle: 'Your selected typeface'),
+        _SectionLabel(
+          title: 'Current font',
+          subtitle: 'Your selected typeface',
+        ),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkSurface : AppColors.surface,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.border,
+            ),
             boxShadow: [shadowAmbient, shadowKey],
           ),
           child: ClipRRect(
@@ -512,7 +545,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             vertical: 12,
                           ),
                           side: BorderSide(
-                            color: isDark ? AppColors.darkBorder : AppColors.border,
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : AppColors.border,
                           ),
                         ),
                       ),
@@ -531,7 +566,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     AppState appState,
     ThemeData theme,
     bool isDark,
-    dynamic selectedFont,
+    FontModel selectedFont,
   ) {
     final fonts = availableFonts.take(8).toList();
 
@@ -574,7 +609,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTypographyRamp(ThemeData theme, bool isDark, dynamic selectedFont) {
+  Widget _buildTypographyRamp(
+    ThemeData theme,
+    bool isDark,
+    FontModel selectedFont,
+  ) {
     final samples = [
       ('Display', 34.0, FontWeight.w700, false),
       ('Heading 1', 28.0, FontWeight.w700, false),
@@ -587,7 +626,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     ];
 
     final shadowAmbient = BoxShadow(
-      color: isDark ? AppColors.shadowAmbientDark : AppColors.shadowAmbientLight,
+      color: isDark
+          ? AppColors.shadowAmbientDark
+          : AppColors.shadowAmbientLight,
       blurRadius: 16,
       offset: const Offset(0, 3),
     );
@@ -604,7 +645,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkSurface : AppColors.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.border,
+            ),
             boxShadow: [shadowAmbient],
           ),
           child: ClipRRect(
@@ -615,8 +658,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ColoredBox(
                     color: i.isOdd
                         ? (isDark
-                            ? Colors.white.withValues(alpha: 0.015)
-                            : Colors.black.withValues(alpha: 0.012))
+                              ? Colors.white.withValues(alpha: 0.015)
+                              : Colors.black.withValues(alpha: 0.012))
                         : Colors.transparent,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -678,7 +721,10 @@ class _SectionLabel extends StatelessWidget {
         if (subtitle != null)
           Text(
             subtitle!,
-            style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
       ],
     );
@@ -705,12 +751,18 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSecondarySurface : const Color(0xFFF0F0F0),
+        color: isDark
+            ? AppColors.darkSecondarySurface
+            : const Color(0xFFF0F0F0),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.border,
+        ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? AppColors.shadowAmbientDark : AppColors.shadowAmbientLight,
+            color: isDark
+                ? AppColors.shadowAmbientDark
+                : AppColors.shadowAmbientLight,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -808,7 +860,10 @@ class _AnimatedCtaState extends State<_AnimatedCta> {
               splashColor: Colors.white.withValues(alpha: 0.08),
               onTap: widget.onPressed,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 15,
+                  horizontal: 20,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -826,7 +881,11 @@ class _AnimatedCtaState extends State<_AnimatedCta> {
                     AnimatedPadding(
                       duration: const Duration(milliseconds: 180),
                       padding: EdgeInsets.only(left: _pressed ? 2 : 8),
-                      child: Icon(Icons.arrow_forward_rounded, color: fg, size: 16),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: fg,
+                        size: 16,
+                      ),
                     ),
                   ],
                 ),

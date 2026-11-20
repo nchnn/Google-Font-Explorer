@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 ///
 /// The Explore screen reveals the catalogue a batch at a time. Existing cards
 /// must not replay their entrance animation when the list rebuilds, so the
-/// screen hands every card [fadeFrom] — the index where the most recently
+/// screen hands every card [fadeFrom], the index where the most recently
 /// appended batch starts. The boundary is captured when the card is created,
 /// not re-evaluated on rebuild: a card that started fading keeps its
 /// `FadeTransition` even if a later batch moves [fadeFrom] past it. Cards
@@ -50,7 +50,10 @@ class _FadeInBatchState extends State<FadeInBatch>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: FadeInBatch.duration);
+    _controller = AnimationController(
+      vsync: this,
+      duration: FadeInBatch.duration,
+    );
     _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _animates = widget.index >= widget.fadeFrom;
     if (_animates) {
@@ -69,6 +72,6 @@ class _FadeInBatchState extends State<FadeInBatch>
   @override
   Widget build(BuildContext context) =>
       !_animates || MediaQuery.disableAnimationsOf(context)
-          ? widget.child
-          : FadeTransition(opacity: _opacity, child: widget.child);
+      ? widget.child
+      : FadeTransition(opacity: _opacity, child: widget.child);
 }

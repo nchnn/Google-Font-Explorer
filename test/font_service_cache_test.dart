@@ -51,8 +51,10 @@ void main() {
           onError: (Object _) {
             // Runs while `second` is still the entry for this family (its own
             // failure cleanup is queued strictly after this callback).
-            newerFutureStillMemoised =
-                identical(service.previewFont(family), second);
+            newerFutureStillMemoised = identical(
+              service.previewFont(family),
+              second,
+            );
           },
         )
         .then((_) {
@@ -69,7 +71,10 @@ void main() {
     final service = FontService.instance;
     service.clearCache();
     for (var i = 0; i < FontService.fontFileCacheLimit + 3; i++) {
-      service.debugCacheFontBytes('https://example.com/$i.ttf', Uint8List.fromList([i]));
+      service.debugCacheFontBytes(
+        'https://example.com/$i.ttf',
+        Uint8List.fromList([i]),
+      );
     }
     expect(service.cachedFontFileCount, FontService.fontFileCacheLimit);
     service.clearCache();

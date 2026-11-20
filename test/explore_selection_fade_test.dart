@@ -35,36 +35,39 @@ Future<void> _pumpFadeInBatch(
   bool disableAnimations = false,
 }) async {
   // copyWith, not a bare MediaQueryData: a bare one would zero the size.
-  await tester.pumpWidget(MaterialApp(
-    home: Builder(
-      builder: (context) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(disableAnimations: disableAnimations),
-        child: FadeInBatch(
-          index: index,
-          fadeFrom: fadeFrom,
-          child: const Text('card'),
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Builder(
+        builder: (context) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(disableAnimations: disableAnimations),
+          child: FadeInBatch(
+            index: index,
+            fadeFrom: fadeFrom,
+            child: const Text('card'),
+          ),
         ),
       ),
     ),
-  ));
+  );
   await tester.pump();
 }
 
 Finder _fadeInside() => find.descendant(
-      of: find.byType(FadeInBatch),
-      matching: find.byType(FadeTransition),
-    );
+  of: find.byType(FadeInBatch),
+  matching: find.byType(FadeTransition),
+);
 
 /// Test-only model whose missing file URL fails a load before any network
 /// request, while counting each attempt to resolve one.
 class _CountingFont extends FontModel {
   _CountingFont(String name)
-      : super(
-          name: name,
-          category: 'Sans Serif',
-          description: 'Test-only font used to count load attempts.',
-          weights: const [FontWeight.w400],
-        );
+    : super(
+        name: name,
+        category: 'Sans Serif',
+        description: 'Test-only font used to count load attempts.',
+        weights: const [FontWeight.w400],
+      );
 
   int fileUrlLookups = 0;
 
@@ -87,25 +90,37 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Lato');
     await tester.pump(const Duration(milliseconds: 350));
     await _settle(tester);
-    expect(find.byIcon(Icons.check_circle_rounded), findsNothing,
-        reason: 'Lato is shown, Roboto is filtered out, but the selection is kept');
+    expect(
+      find.byIcon(Icons.check_circle_rounded),
+      findsNothing,
+      reason:
+          'Lato is shown, Roboto is filtered out, but the selection is kept',
+    );
 
     await tester.enterText(find.byType(TextField).first, '');
     await tester.pump(const Duration(milliseconds: 350));
     await _settle(tester);
-    expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget,
-        reason: 'clearing the search restores Roboto and its selected state');
+    expect(
+      find.byIcon(Icons.check_circle_rounded),
+      findsOneWidget,
+      reason: 'clearing the search restores Roboto and its selected state',
+    );
   });
 
-  testWidgets('selection survives a category change and a page reset', (tester) async {
+  testWidgets('selection survives a category change and a page reset', (
+    tester,
+  ) async {
     await _openExplore(tester);
 
     final serif = find.widgetWithText(FilterChip, 'Serif');
     await tester.ensureVisible(serif);
     await tester.tap(serif);
     await _settle(tester);
-    expect(find.byIcon(Icons.check_circle_rounded), findsNothing,
-        reason: 'Roboto is not a serif, so the selection has no visible card');
+    expect(
+      find.byIcon(Icons.check_circle_rounded),
+      findsNothing,
+      reason: 'Roboto is not a serif, so the selection has no visible card',
+    );
 
     final all = find.widgetWithText(FilterChip, 'All');
     await tester.ensureVisible(all);
@@ -124,19 +139,34 @@ void main() {
     final cards = tester
         .widgetList<FadeInBatch>(find.byType(FadeInBatch, skipOffstage: false))
         .toList();
-    expect(cards.length, greaterThan(5),
-        reason: 'the viewport fill check must have appended a batch');
+    expect(
+      cards.length,
+      greaterThan(5),
+      reason: 'the viewport fill check must have appended a batch',
+    );
 
     final boundaries = cards.map((card) => card.fadeFrom).toSet();
-    expect(boundaries.length, 1, reason: 'every card must share one fade boundary');
+    expect(
+      boundaries.length,
+      1,
+      reason: 'every card must share one fade boundary',
+    );
     final fadeFrom = boundaries.single;
-    expect(fadeFrom, greaterThan(0),
-        reason: 'an appended batch must mark where the fade starts');
-    expect(cards.where((card) => card.index >= fadeFrom), isNotEmpty,
-        reason: 'the newly appended cards must be inside the fade range');
+    expect(
+      fadeFrom,
+      greaterThan(0),
+      reason: 'an appended batch must mark where the fade starts',
+    );
+    expect(
+      cards.where((card) => card.index >= fadeFrom),
+      isNotEmpty,
+      reason: 'the newly appended cards must be inside the fade range',
+    );
   });
 
-  testWidgets('batch items fade in when animations are enabled', (tester) async {
+  testWidgets('batch items fade in when animations are enabled', (
+    tester,
+  ) async {
     await _pumpFadeInBatch(tester, index: 2, fadeFrom: 0);
     expect(_fadeInside(), findsOneWidget);
 
@@ -146,7 +176,9 @@ void main() {
     expect(fade.opacity.value, 1.0);
   });
 
-  testWidgets('a mid-fade card finishes when the boundary advances', (tester) async {
+  testWidgets('a mid-fade card finishes when the boundary advances', (
+    tester,
+  ) async {
     await _pumpFadeInBatch(tester, index: 2, fadeFrom: 0);
     final fade = tester.widget<FadeTransition>(_fadeInside());
     await tester.pump(const Duration(milliseconds: 60));
@@ -158,11 +190,17 @@ void main() {
     // card while it is still fading. The card was created inside the fade range,
     // so it must finish its entrance rather than snap to full opacity.
     await _pumpFadeInBatch(tester, index: 2, fadeFrom: 3);
-    expect(_fadeInside(), findsOneWidget,
-        reason: 'an advancing boundary must not drop a mid-fade transition');
+    expect(
+      _fadeInside(),
+      findsOneWidget,
+      reason: 'an advancing boundary must not drop a mid-fade transition',
+    );
     final afterAdvance = tester.widget<FadeTransition>(_fadeInside());
-    expect(identical(afterAdvance.opacity, fade.opacity), isTrue,
-        reason: 'the same animation must keep running, not a fresh one');
+    expect(
+      identical(afterAdvance.opacity, fade.opacity),
+      isTrue,
+      reason: 'the same animation must keep running, not a fresh one',
+    );
 
     await tester.pump(const Duration(milliseconds: 240));
     expect(fade.opacity.value, 1.0);
@@ -174,8 +212,15 @@ void main() {
     expect(find.text('card'), findsOneWidget);
   });
 
-  testWidgets('reduced motion renders batch items without a fade', (tester) async {
-    await _pumpFadeInBatch(tester, index: 2, fadeFrom: 0, disableAnimations: true);
+  testWidgets('reduced motion renders batch items without a fade', (
+    tester,
+  ) async {
+    await _pumpFadeInBatch(
+      tester,
+      index: 2,
+      fadeFrom: 0,
+      disableAnimations: true,
+    );
     expect(_fadeInside(), findsNothing);
     expect(find.text('card'), findsOneWidget);
   });
@@ -186,24 +231,30 @@ void main() {
     // selected page onstage, so the default (onstage-only) finder reaches the
     // Explore cards. skipOffstage: false would return Home's hero preview
     // first, which is a different widget with a different style.
-    final preview =
-        tester.widgetList<FontText>(find.byType(FontText)).first;
-    expect(preview.style.fontWeight, FontWeight.w400,
-        reason: 'list previews must not request a heavier variant');
+    final preview = tester.widgetList<FontText>(find.byType(FontText)).first;
+    expect(
+      preview.style.fontWeight,
+      FontWeight.w400,
+      reason: 'list previews must not request a heavier variant',
+    );
     expect(preview.showErrorNotice, isFalse);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a failing preview is not re-requested on every rebuild', (tester) async {
+  testWidgets('a failing preview is not re-requested on every rebuild', (
+    tester,
+  ) async {
     // Not in google_fonts and has no catalogue file URL, so the load fails fast
     // without touching the network.
-    await tester.pumpWidget(const MaterialApp(
-      home: FontText(
-        fontFamily: 'DefinitelyNotAFontXYZ',
-        text: 'preview',
-        showErrorNotice: false,
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: FontText(
+          fontFamily: 'DefinitelyNotAFontXYZ',
+          text: 'preview',
+          showErrorNotice: false,
+        ),
       ),
-    ));
+    );
     // An unstable future re-subscribes on every build and never settles.
     await _settle(tester);
     expect(find.text('preview'), findsOneWidget);
@@ -214,27 +265,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a failed preview load is reused across plain rebuilds', (tester) async {
+  testWidgets('a failed preview load is reused across plain rebuilds', (
+    tester,
+  ) async {
     // The model is registered but has no file URL, so each load attempt fails
     // fast without touching the network and increments fileUrlLookups.
     final font = _CountingFont('CountingFailureFontXYZ');
     FontService.instance.registerFonts([font]);
 
     late StateSetter rebuild;
-    await tester.pumpWidget(MaterialApp(
-      home: StatefulBuilder(
-        builder: (context, setState) {
-          rebuild = setState;
-          // Not const: a fresh FontText instance is what forces the State to
-          // rebuild, which is the production condition under test.
-          return FontText(
-            fontFamily: font.name,
-            text: 'preview',
-            showErrorNotice: false,
-          );
-        },
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            rebuild = setState;
+            // Not const: a fresh FontText instance is what forces the State to
+            // rebuild, which is the production condition under test.
+            return FontText(
+              fontFamily: font.name,
+              text: 'preview',
+              showErrorNotice: false,
+            );
+          },
+        ),
       ),
-    ));
+    );
     await _settle(tester);
     expect(font.fileUrlLookups, 1, reason: 'the first build starts one load');
 
@@ -242,8 +297,11 @@ void main() {
       rebuild(() {});
       await tester.pump();
     }
-    expect(font.fileUrlLookups, 1,
-        reason: 'plain rebuilds must reuse the failed future, not re-request the font');
+    expect(
+      font.fileUrlLookups,
+      1,
+      reason: 'plain rebuilds must reuse the failed future, not re-request the font',
+    );
     expect(find.text('preview'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

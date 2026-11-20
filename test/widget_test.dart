@@ -10,40 +10,63 @@ import 'package:type_studio/widgets/floating_pill_navigation.dart';
 
 void main() {
   group('FontModel Tests', () {
-    test('FontModel.fromJson parses Google Fonts Developer API item correctly', () {
-      final sampleJson = {
-        'family': 'Exo 2',
-        'variants': ['100', '100italic', '300', 'regular', 'italic', '700', '900'],
-        'subsets': ['latin', 'latin-ext'],
-        'version': 'v20',
-        'lastModified': '2023-05-02',
-        'files': {
-          '100': 'http://fonts.gstatic.com/s/exo2/v20/7cHrv4okm5zmbt6PFND-.ttf',
-          'regular': 'http://fonts.gstatic.com/s/exo2/v20/7cHrv4okm5zmbt5jFND-.ttf',
-          '700': 'http://fonts.gstatic.com/s/exo2/v20/7cHrv4okm5zmbt5FFtD-.ttf',
-        },
-        'category': 'sans-serif',
-      };
+    test(
+      'FontModel.fromJson parses Google Fonts Developer API item correctly',
+      () {
+        final sampleJson = {
+          'family': 'Exo 2',
+          'variants': [
+            '100',
+            '100italic',
+            '300',
+            'regular',
+            'italic',
+            '700',
+            '900',
+          ],
+          'subsets': ['latin', 'latin-ext'],
+          'version': 'v20',
+          'lastModified': '2023-05-02',
+          'files': {
+            '100':
+                'http://fonts.gstatic.com/s/exo2/v20/7cHrv4okm5zmbt6PFND-.ttf',
+            'regular':
+                'http://fonts.gstatic.com/s/exo2/v20/7cHrv4okm5zmbt5jFND-.ttf',
+            '700':
+                'http://fonts.gstatic.com/s/exo2/v20/7cHrv4okm5zmbt5FFtD-.ttf',
+          },
+          'category': 'sans-serif',
+        };
 
-      final font = FontModel.fromJson(sampleJson);
+        final font = FontModel.fromJson(sampleJson);
 
-      expect(font.name, 'Exo 2');
-      expect(font.category, 'Sans Serif');
-      expect(font.variants.length, 7);
-      expect(font.weights, containsAll([
-        FontWeight.w100,
-        FontWeight.w300,
-        FontWeight.w400,
-        FontWeight.w700,
-        FontWeight.w900,
-      ]));
+        expect(font.name, 'Exo 2');
+        expect(font.category, 'Sans Serif');
+        expect(font.variants.length, 7);
+        expect(
+          font.weights,
+          containsAll([
+            FontWeight.w100,
+            FontWeight.w300,
+            FontWeight.w400,
+            FontWeight.w700,
+            FontWeight.w900,
+          ]),
+        );
 
-      // Verify HTTP URLs were converted to HTTPS
-      expect(font.files['regular'], startsWith('https://'));
-      expect(font.getFileUrl(weight: FontWeight.w700), startsWith('https://'));
-      expect(font.getFileUrl(weight: FontWeight.w400), startsWith('https://'));
-      expect(font.getFileUrl(weight: FontWeight.w200), isNotNull);
-    });
+        // Verify HTTP URLs were converted to HTTPS
+        expect(font.files['regular'], startsWith('https://'));
+        expect(
+          font.getFileUrl(weight: FontWeight.w700),
+          startsWith('https://'),
+        );
+        expect(
+          font.getFileUrl(weight: FontWeight.w400),
+          startsWith('https://'),
+        );
+        expect(font.getFileUrl(weight: FontWeight.w200), isNotNull);
+      },
+    );
 
     test('FontModel weightsLabel and variantsLabel formatting', () {
       const font = FontModel(
@@ -65,7 +88,10 @@ void main() {
     test('isGoogleFontsSupported correctly distinguishes known fonts', () {
       expect(FontService.isGoogleFontsSupported('Roboto'), isTrue);
       expect(FontService.isGoogleFontsSupported('Open Sans'), isTrue);
-      expect(FontService.isGoogleFontsSupported('NonExistentCustomFont12345'), isFalse);
+      expect(
+        FontService.isGoogleFontsSupported('NonExistentCustomFont12345'),
+        isFalse,
+      );
     });
 
     test('Registry initializes with bundled availableFonts', () {
@@ -82,7 +108,10 @@ void main() {
     });
 
     test('FontApiConfig has clearly documented API key location', () {
-      expect(FontApiConfig.apiBaseUrl, 'https://www.googleapis.com/webfonts/v1/webfonts');
+      expect(
+        FontApiConfig.apiBaseUrl,
+        'https://www.googleapis.com/webfonts/v1/webfonts',
+      );
       expect(FontApiConfig.apiKey, isNotEmpty);
     });
   });
@@ -99,89 +128,101 @@ void main() {
     // Find an icon inside the nav pill (avoids hitting identically-named
     // icons elsewhere on screen, e.g. the Home header logo).
     Finder navIcon(IconData icon) => find.descendant(
-          of: find.byType(FloatingPillNavigation),
-          matching: find.byIcon(icon),
+      of: find.byType(FloatingPillNavigation),
+      matching: find.byIcon(icon),
+    );
+
+    testWidgets(
+      'App renders Home screen with TypeStudio title and theme toggle',
+      (tester) async {
+        await tester.pumpWidget(const TypeStudioApp());
+        await tester.pump();
+
+        expect(find.text('TypeStudio'), findsWidgets);
+        expect(find.text('GOOGLE FONTS EXPLORER'), findsOneWidget);
+        expect(find.text('Make every word'), findsOneWidget);
+
+        // Verify theme toggle button is present
+        expect(find.byIcon(Icons.wb_sunny_rounded), findsOneWidget);
+
+        // Tap theme toggle to switch to Dark Mode
+        await tester.tap(find.byIcon(Icons.wb_sunny_rounded));
+        await settle(tester);
+
+        // Verify icon changed to Moon for Dark Mode
+        expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
+
+        // Tap again to switch back to Light Mode
+        await tester.tap(find.byIcon(Icons.nightlight_round));
+        await settle(tester);
+        expect(find.byIcon(Icons.wb_sunny_rounded), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Bottom navigation is a compact floating pill with three tabs',
+      (tester) async {
+        await tester.pumpWidget(const TypeStudioApp());
+        await tester.pump();
+
+        // The full-width Material navigation bar has been replaced by the pill.
+        expect(find.byType(NavigationBar), findsNothing);
+        expect(find.byType(FloatingPillNavigation), findsOneWidget);
+
+        // Exactly 3 navigation destinations.
+        expect(find.text('Home'), findsOneWidget);
+        expect(find.text('Explore'), findsOneWidget);
+        expect(find.text('Preview'), findsOneWidget);
+        expect(find.text('About'), findsNothing);
+
+        // The pill is short, centred, and lifted above the bottom edge.
+        final pillRect = tester.getRect(find.byType(FloatingPillNavigation));
+        final screenSize =
+            tester.view.physicalSize / tester.view.devicePixelRatio;
+        expect(pillRect.width, lessThan(screenSize.width * 0.6));
+        expect(pillRect.center.dx, closeTo(screenSize.width / 2, 1));
+        expect(pillRect.bottom, lessThan(screenSize.height));
+
+        // Navigate to Explore tab (tap icon; inactive labels are clipped)
+        await tester.tap(navIcon(Icons.grid_view_rounded));
+        await settle(tester);
+        expect(find.text('Explore fonts'), findsOneWidget);
+
+        // Navigate to Preview tab
+        await tester.tap(navIcon(Icons.text_fields_rounded));
+        await settle(tester);
+        expect(find.text('Typography tester'), findsOneWidget);
+        expect(find.text('LIVE PREVIEW'), findsOneWidget);
+
+        // Navigate back Home
+        await tester.tap(navIcon(Icons.home_outlined));
+        await settle(tester);
+        expect(find.text('Make every word'), findsOneWidget);
+
+        // Verify fixed preview and scrollbar in controls section
+        await tester.tap(navIcon(Icons.text_fields_rounded));
+        await settle(tester);
+        expect(find.byType(Scrollbar), findsOneWidget);
+        expect(find.text('Typography controls'), findsOneWidget);
+        expect(find.text('Font size'), findsOneWidget);
+        // Bring the weight control into view instead of hiding the fact that it
+        // starts below the fold; the assertion must prove it is reachable.
+        await tester.dragUntilVisible(
+          find.text('Font weight'),
+          find.byType(ListView),
+          const Offset(0, -200),
         );
+        expect(find.text('Font weight'), findsOneWidget);
+        expect(
+          find.text('Text alignment', skipOffstage: false),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('App renders Home screen with TypeStudio title and theme toggle', (tester) async {
-      await tester.pumpWidget(const TypeStudioApp());
-      await tester.pump();
-
-      expect(find.text('TypeStudio'), findsWidgets);
-      expect(find.text('GOOGLE FONTS EXPLORER'), findsOneWidget);
-      expect(find.text('Make every word'), findsOneWidget);
-
-      // Verify theme toggle button is present
-      expect(find.byIcon(Icons.wb_sunny_rounded), findsOneWidget);
-
-      // Tap theme toggle to switch to Dark Mode
-      await tester.tap(find.byIcon(Icons.wb_sunny_rounded));
-      await settle(tester);
-
-      // Verify icon changed to Moon for Dark Mode
-      expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
-
-      // Tap again to switch back to Light Mode
-      await tester.tap(find.byIcon(Icons.nightlight_round));
-      await settle(tester);
-      expect(find.byIcon(Icons.wb_sunny_rounded), findsOneWidget);
-    });
-
-    testWidgets('Bottom navigation is a compact floating pill with three tabs', (tester) async {
-      await tester.pumpWidget(const TypeStudioApp());
-      await tester.pump();
-
-      // The full-width Material navigation bar has been replaced by the pill.
-      expect(find.byType(NavigationBar), findsNothing);
-      expect(find.byType(FloatingPillNavigation), findsOneWidget);
-
-      // Exactly 3 navigation destinations.
-      expect(find.text('Home'), findsOneWidget);
-      expect(find.text('Explore'), findsOneWidget);
-      expect(find.text('Preview'), findsOneWidget);
-      expect(find.text('About'), findsNothing);
-
-      // The pill is short, centred, and lifted above the bottom edge.
-      final pillRect = tester.getRect(find.byType(FloatingPillNavigation));
-      final screenSize = tester.view.physicalSize / tester.view.devicePixelRatio;
-      expect(pillRect.width, lessThan(screenSize.width * 0.6));
-      expect(pillRect.center.dx, closeTo(screenSize.width / 2, 1));
-      expect(pillRect.bottom, lessThan(screenSize.height));
-
-      // Navigate to Explore tab (tap icon; inactive labels are clipped)
-      await tester.tap(navIcon(Icons.grid_view_rounded));
-      await settle(tester);
-      expect(find.text('Explore fonts'), findsOneWidget);
-
-      // Navigate to Preview tab
-      await tester.tap(navIcon(Icons.text_fields_rounded));
-      await settle(tester);
-      expect(find.text('Typography tester'), findsOneWidget);
-      expect(find.text('LIVE PREVIEW'), findsOneWidget);
-
-      // Navigate back Home
-      await tester.tap(navIcon(Icons.home_outlined));
-      await settle(tester);
-      expect(find.text('Make every word'), findsOneWidget);
-
-      // Verify fixed preview and scrollbar in controls section
-      await tester.tap(navIcon(Icons.text_fields_rounded));
-      await settle(tester);
-      expect(find.byType(Scrollbar), findsOneWidget);
-      expect(find.text('Typography controls'), findsOneWidget);
-      expect(find.text('Font size'), findsOneWidget);
-      // Bring the weight control into view instead of hiding the fact that it
-      // starts below the fold; the assertion must prove it is reachable.
-      await tester.dragUntilVisible(
-        find.text('Font weight'),
-        find.byType(ListView),
-        const Offset(0, -200),
-      );
-      expect(find.text('Font weight'), findsOneWidget);
-      expect(find.text('Text alignment', skipOffstage: false), findsOneWidget);
-    });
-
-    testWidgets('Switching tabs preserves Explore search state', (tester) async {
+    testWidgets('Switching tabs preserves Explore search state', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -205,17 +246,20 @@ void main() {
       await tester.tap(navIcon(Icons.grid_view_rounded));
       await settle(tester);
 
-      final restoredField = tester.widget<TextField>(find.byType(TextField).first);
+      final restoredField = tester.widget<TextField>(
+        find.byType(TextField).first,
+      );
       expect(restoredField.controller?.text, 'Roboto');
       expect(find.text('Roboto'), findsWidgets);
     });
 
-    testWidgets('scrolled content stays clear of the floating pill', (tester) async {
+    testWidgets('scrolled content stays clear of the floating pill', (
+      tester,
+    ) async {
       await tester.pumpWidget(const TypeStudioApp());
       await settle(tester);
 
-      final pillTop =
-          tester.getTopLeft(find.byType(FloatingPillNavigation)).dy;
+      final pillTop = tester.getTopLeft(find.byType(FloatingPillNavigation)).dy;
 
       // Home: the final typography sample must rest above the pill.
       for (var i = 0; i < 3; i++) {
@@ -225,8 +269,10 @@ void main() {
         );
         await settle(tester);
       }
-      final lastHomeItem =
-          find.textContaining('Bold / Italic', skipOffstage: false);
+      final lastHomeItem = find.textContaining(
+        'Bold / Italic',
+        skipOffstage: false,
+      );
       expect(lastHomeItem, findsOneWidget);
       expect(tester.getBottomLeft(lastHomeItem).dy, lessThan(pillTop));
 
@@ -237,8 +283,10 @@ void main() {
         await tester.drag(find.byType(ListView), const Offset(0, -20000));
         await settle(tester);
       }
-      final resetButton =
-          find.text('Reset preview settings', skipOffstage: false);
+      final resetButton = find.text(
+        'Reset preview settings',
+        skipOffstage: false,
+      );
       expect(resetButton, findsOneWidget);
       expect(tester.getBottomLeft(resetButton).dy, lessThan(pillTop));
     });
@@ -259,7 +307,9 @@ void main() {
       expect(pillRect.bottom, closeTo(900 - 24 - 12, 0.5));
     });
 
-    testWidgets('programmatic navigation keeps the indicator in sync', (tester) async {
+    testWidgets('programmatic navigation keeps the indicator in sync', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -297,7 +347,9 @@ void main() {
       expect(previewX, greaterThan(exploreX));
     });
 
-    testWidgets('navigation overlay adds no background behind the pill', (tester) async {
+    testWidgets('navigation overlay adds no background behind the pill', (
+      tester,
+    ) async {
       await tester.pumpWidget(const TypeStudioApp());
       await settle(tester);
 
@@ -322,7 +374,9 @@ void main() {
       expect(wrappers.contains(BottomAppBar), isFalse);
     });
 
-    testWidgets('Explore tab allows debounced searching and filtering fonts', (tester) async {
+    testWidgets('Explore tab allows debounced searching and filtering fonts', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -349,16 +403,26 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       await settle(tester);
 
-      expect(find.text('No matching font families found', skipOffstage: false), findsOneWidget);
+      expect(
+        find.text('No matching font families found', skipOffstage: false),
+        findsOneWidget,
+      );
 
       // Clear search
-      await tester.tap(find.text('Clear search & filters', skipOffstage: false));
+      await tester.tap(
+        find.text('Clear search & filters', skipOffstage: false),
+      );
       await settle(tester);
 
-      expect(find.text('No matching font families found', skipOffstage: false), findsNothing);
+      expect(
+        find.text('No matching font families found', skipOffstage: false),
+        findsNothing,
+      );
     });
 
-    testWidgets('Typography controls render all options and update state', (tester) async {
+    testWidgets('Typography controls render all options and update state', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -440,7 +504,9 @@ void main() {
       expect(find.text('Regular (400)'), findsOneWidget);
     });
 
-    testWidgets('preview text field keeps a bounded height as text grows', (tester) async {
+    testWidgets('preview text field keeps a bounded height as text grows', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 1920);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -463,35 +529,38 @@ void main() {
       expect(after.height, before.height);
     });
 
-    testWidgets('Typography controls dynamically reflect font weights from font model', (tester) async {
-      tester.view.physicalSize = const Size(1080, 1920);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+    testWidgets(
+      'Typography controls dynamically reflect font weights from font model',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 1920);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const TypeStudioApp());
-      await settle(tester);
+        await tester.pumpWidget(const TypeStudioApp());
+        await settle(tester);
 
-      await tester.tap(navIcon(Icons.text_fields_rounded));
-      await settle(tester);
+        await tester.tap(navIcon(Icons.text_fields_rounded));
+        await settle(tester);
 
-      final context = tester.element(find.byType(PreviewScreen));
-      final appState = AppState.read(context);
-      final preview = PreviewState.read(context);
+        final context = tester.element(find.byType(PreviewScreen));
+        final appState = AppState.read(context);
+        final preview = PreviewState.read(context);
 
-      const customFont = FontModel(
-        name: 'SingleWeightFont',
-        category: 'Serif',
-        description: 'Test single weight font',
-        weights: [FontWeight.w400],
-      );
+        const customFont = FontModel(
+          name: 'SingleWeightFont',
+          category: 'Serif',
+          description: 'Test single weight font',
+          weights: [FontWeight.w400],
+        );
 
-      appState.selectFont(customFont, preview: preview);
-      await settle(tester);
+        appState.selectFont(customFont, preview: preview);
+        await settle(tester);
 
-      expect(find.text('400'), findsOneWidget);
-      expect(find.text('300'), findsNothing);
-      expect(find.text('700'), findsNothing);
-    });
+        expect(find.text('400'), findsOneWidget);
+        expect(find.text('300'), findsNothing);
+        expect(find.text('700'), findsNothing);
+      },
+    );
   });
 }

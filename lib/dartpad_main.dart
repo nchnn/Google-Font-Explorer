@@ -141,7 +141,9 @@ class AppTheme {
             return AppColors.surface;
           }),
           foregroundColor: WidgetStateProperty.all(AppColors.primaryText),
-          side: WidgetStateProperty.all(const BorderSide(color: AppColors.border)),
+          side: WidgetStateProperty.all(
+            const BorderSide(color: AppColors.border),
+          ),
         ),
       ),
       chipTheme: ChipThemeData(
@@ -224,7 +226,10 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.darkPrimaryAccent, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.darkPrimaryAccent,
+            width: 1.5,
+          ),
         ),
       ),
       sliderTheme: SliderThemeData(
@@ -242,13 +247,18 @@ class AppTheme {
             return AppColors.darkSurface;
           }),
           foregroundColor: WidgetStateProperty.all(AppColors.darkPrimaryText),
-          side: WidgetStateProperty.all(const BorderSide(color: AppColors.darkBorder)),
+          side: WidgetStateProperty.all(
+            const BorderSide(color: AppColors.darkBorder),
+          ),
         ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.darkSecondarySurface,
         selectedColor: AppColors.darkBorder,
-        labelStyle: const TextStyle(fontSize: 12, color: AppColors.darkPrimaryText),
+        labelStyle: const TextStyle(
+          fontSize: 12,
+          color: AppColors.darkPrimaryText,
+        ),
         side: const BorderSide(color: AppColors.darkBorder),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -321,7 +331,10 @@ class FontModel {
     return '${variants.length} ${variants.length == 1 ? 'variant' : 'variants'} ($formatted$suffix)';
   }
 
-  String? getFileUrl({FontWeight weight = FontWeight.w400, bool italic = false}) {
+  String? getFileUrl({
+    FontWeight weight = FontWeight.w400,
+    bool italic = false,
+  }) {
     if (files.isEmpty) {
       return null;
     }
@@ -354,8 +367,11 @@ class FontModel {
 
   factory FontModel.fromJson(Map<String, dynamic> json) {
     final family = json['family'] as String? ?? 'Unknown';
-    final category = formatCategory(json['category'] as String? ?? 'sans-serif');
-    final variantsList = (json['variants'] as List<dynamic>?)
+    final category = formatCategory(
+      json['category'] as String? ?? 'sans-serif',
+    );
+    final variantsList =
+        (json['variants'] as List<dynamic>?)
             ?.map((e) => e.toString())
             .toList() ??
         const ['regular'];
@@ -375,11 +391,16 @@ class FontModel {
     return FontModel(
       name: family,
       category: category,
-      description: 'Google Fonts catalogue typeface with ${variantsList.length} variants.',
+      description:
+          'Google Fonts catalogue typeface with ${variantsList.length} variants.',
       weights: parsedWeights.isEmpty ? const [FontWeight.w400] : parsedWeights,
       variants: variantsList,
       files: filesMap,
-      subsets: (json['subsets'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
+      subsets:
+          (json['subsets'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       version: json['version'] as String? ?? '',
       lastModified: json['lastModified'] as String? ?? '',
     );
@@ -387,54 +408,87 @@ class FontModel {
 
   static String _formatWeightName(FontWeight weight) {
     switch (weight) {
-      case FontWeight.w100: return 'Thin';
-      case FontWeight.w200: return 'Extra Light';
-      case FontWeight.w300: return 'Light';
-      case FontWeight.w400: return 'Regular';
-      case FontWeight.w500: return 'Medium';
-      case FontWeight.w600: return 'Semi Bold';
-      case FontWeight.w700: return 'Bold';
-      case FontWeight.w800: return 'Extra Bold';
-      case FontWeight.w900: return 'Black';
-      default: return 'Regular';
+      case FontWeight.w100:
+        return 'Thin';
+      case FontWeight.w200:
+        return 'Extra Light';
+      case FontWeight.w300:
+        return 'Light';
+      case FontWeight.w400:
+        return 'Regular';
+      case FontWeight.w500:
+        return 'Medium';
+      case FontWeight.w600:
+        return 'Semi Bold';
+      case FontWeight.w700:
+        return 'Bold';
+      case FontWeight.w800:
+        return 'Extra Bold';
+      case FontWeight.w900:
+        return 'Black';
+      default:
+        return 'Regular';
     }
   }
 
   static int _weightToNumber(FontWeight weight) {
     switch (weight) {
-      case FontWeight.w100: return 100;
-      case FontWeight.w200: return 200;
-      case FontWeight.w300: return 300;
-      case FontWeight.w400: return 400;
-      case FontWeight.w500: return 500;
-      case FontWeight.w600: return 600;
-      case FontWeight.w700: return 700;
-      case FontWeight.w800: return 800;
-      case FontWeight.w900: return 900;
-      default: return 400;
+      case FontWeight.w100:
+        return 100;
+      case FontWeight.w200:
+        return 200;
+      case FontWeight.w300:
+        return 300;
+      case FontWeight.w400:
+        return 400;
+      case FontWeight.w500:
+        return 500;
+      case FontWeight.w600:
+        return 600;
+      case FontWeight.w700:
+        return 700;
+      case FontWeight.w800:
+        return 800;
+      case FontWeight.w900:
+        return 900;
+      default:
+        return 400;
     }
   }
 
   static String _formatVariantName(String variant) {
     switch (variant) {
-      case 'regular': return 'Regular';
-      case 'italic': return 'Italic';
-      case '100': return 'Thin';
-      case '300': return 'Light';
-      case '500': return 'Medium';
-      case '700': return 'Bold';
-      case '900': return 'Black';
-      default: return variant;
+      case 'regular':
+        return 'Regular';
+      case 'italic':
+        return 'Italic';
+      case '100':
+        return 'Thin';
+      case '300':
+        return 'Light';
+      case '500':
+        return 'Medium';
+      case '700':
+        return 'Bold';
+      case '900':
+        return 'Black';
+      default:
+        return variant;
     }
   }
 
   static String formatCategory(String raw) {
     switch (raw.toLowerCase()) {
-      case 'sans-serif': return 'Sans Serif';
-      case 'serif': return 'Serif';
-      case 'display': return 'Display';
-      case 'handwriting': return 'Handwriting';
-      case 'monospace': return 'Monospace';
+      case 'sans-serif':
+        return 'Sans Serif';
+      case 'serif':
+        return 'Serif';
+      case 'display':
+        return 'Display';
+      case 'handwriting':
+        return 'Handwriting';
+      case 'monospace':
+        return 'Monospace';
       default:
         if (raw.isEmpty) {
           return 'Sans Serif';
@@ -473,24 +527,24 @@ class FontModel {
 
 class CatalogueEntry {
   CatalogueEntry.fromJson(Map<String, dynamic> json)
-      : name = json['family'] as String? ?? 'Unknown',
-        category = FontModel.formatCategory(
-          json['category'] as String? ?? 'sans-serif',
-        ),
-        searchName = (json['family'] as String? ?? 'Unknown').toLowerCase(),
-        searchCategory = FontModel.formatCategory(
-          json['category'] as String? ?? 'sans-serif',
-        ).toLowerCase(),
-        raw = json,
-        _providedModel = null;
+    : name = json['family'] as String? ?? 'Unknown',
+      category = FontModel.formatCategory(
+        json['category'] as String? ?? 'sans-serif',
+      ),
+      searchName = (json['family'] as String? ?? 'Unknown').toLowerCase(),
+      searchCategory = FontModel.formatCategory(
+        json['category'] as String? ?? 'sans-serif',
+      ).toLowerCase(),
+      raw = json,
+      _providedModel = null;
 
   CatalogueEntry.fromModel(FontModel model)
-      : name = model.name,
-        category = model.category,
-        searchName = model.name.toLowerCase(),
-        searchCategory = model.category.toLowerCase(),
-        raw = null,
-        _providedModel = model;
+    : name = model.name,
+      category = model.category,
+      searchName = model.name.toLowerCase(),
+      searchCategory = model.category.toLowerCase(),
+      raw = null,
+      _providedModel = model;
 
   final String name;
   final String category;
@@ -579,7 +633,8 @@ const availableFonts = <FontModel>[
     weights: commonWeights,
     variants: standardVariants,
     files: {
-      'regular': 'https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrFJA.ttf',
+      'regular':
+          'https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrFJA.ttf',
     },
   ),
   FontModel(
@@ -609,7 +664,8 @@ const availableFonts = <FontModel>[
     weights: commonWeights,
     variants: standardVariants,
     files: {
-      'regular': 'https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXiWtFCc.ttf',
+      'regular':
+          'https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXiWtFCc.ttf',
     },
   ),
   FontModel(
@@ -709,10 +765,8 @@ enum FontSortOrder {
 /// It owns no timers, performs no I/O, and imports no widgets, which keeps it
 /// directly unit-testable.
 class FontPaginator<T> {
-  FontPaginator({
-    required this.idOf,
-    this.pageSize = defaultPageSize,
-  }) : assert(pageSize > 0, 'pageSize must be greater than zero');
+  FontPaginator({required this.idOf, this.pageSize = defaultPageSize})
+    : assert(pageSize > 0, 'pageSize must be greater than zero');
 
   /// Identifier extractor used for de-duplicating items.
   final String Function(T) idOf;
@@ -902,12 +956,14 @@ class FontService {
     );
 
     try {
-      final response = await http.get(uri).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () => throw const FontApiException(
-          'Connection timed out reaching Google Fonts API.',
-        ),
-      );
+      final response = await http
+          .get(uri)
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => throw const FontApiException(
+              'Connection timed out reaching Google Fonts API.',
+            ),
+          );
 
       if (response.statusCode == 200) {
         // Paint-first decode path for web sandbox
@@ -968,10 +1024,7 @@ class FontService {
         return _activeFontLoads[familyName]!;
       }
 
-      final loadFuture = _loadCustomFont(
-        familyName,
-        fileUrl: fileUrl,
-      );
+      final loadFuture = _loadCustomFont(familyName, fileUrl: fileUrl);
 
       _activeFontLoads[familyName] = loadFuture;
 
@@ -1034,9 +1087,9 @@ class FontService {
         if (_cachedFontBytes(secureUrl) != null) {
           return;
         }
-        final response = await http.get(Uri.parse(secureUrl)).timeout(
-          const Duration(seconds: 20),
-        );
+        final response = await http
+            .get(Uri.parse(secureUrl))
+            .timeout(const Duration(seconds: 20));
         if (response.statusCode == 200) {
           _putFontBytes(secureUrl, response.bodyBytes);
         }
@@ -1069,13 +1122,19 @@ class FontService {
         if (racedBytes != null) {
           fontBytes = racedBytes;
         } else {
-          final response = await http.get(Uri.parse(secureUrl)).timeout(
-            const Duration(seconds: 20),
-            onTimeout: () => throw FontApiException('Font download timed out for "$familyName".'),
-          );
+          final response = await http
+              .get(Uri.parse(secureUrl))
+              .timeout(
+                const Duration(seconds: 20),
+                onTimeout: () => throw FontApiException(
+                  'Font download timed out for "$familyName".',
+                ),
+              );
 
           if (response.statusCode != 200) {
-            throw FontApiException('Failed to download font file for "$familyName".');
+            throw FontApiException(
+              'Failed to download font file for "$familyName".',
+            );
           }
 
           fontBytes = response.bodyBytes;
@@ -1251,8 +1310,10 @@ class _FontTextState extends State<FontText> {
 
     if (isGoogleFonts) {
       try {
-        final googleStyle =
-            GoogleFonts.getFont(family, textStyle: widget.style);
+        final googleStyle = GoogleFonts.getFont(
+          family,
+          textStyle: widget.style,
+        );
         return FutureBuilder<void>(
           key: ValueKey('gf-$family-$_retryKey'),
           future: _pendingFor(family),
@@ -1299,26 +1360,56 @@ class _FontTextState extends State<FontText> {
     bool canRetry = false,
   }) {
     if (!widget.showErrorNotice) {
-      return Text(widget.text, style: widget.style, textAlign: widget.textAlign, maxLines: widget.maxLines);
+      return Text(
+        widget.text,
+        style: widget.style,
+        textAlign: widget.textAlign,
+        maxLines: widget.maxLines,
+      );
     }
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(widget.text, style: widget.style, textAlign: widget.textAlign, maxLines: widget.maxLines),
+        Text(
+          widget.text,
+          style: widget.style,
+          textAlign: widget.textAlign,
+          maxLines: widget.maxLines,
+        ),
         const SizedBox(height: 4),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.info_outline, size: 12, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.info_outline,
+              size: 12,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(width: 4),
-            Flexible(child: Text(errorMessage, style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant))),
+            Flexible(
+              child: Text(
+                errorMessage,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
             if (canRetry) ...[
               const SizedBox(width: 8),
               InkWell(
                 onTap: () => setState(() => _retryKey++),
-                child: Text('Retry', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: theme.colorScheme.primary, decoration: TextDecoration.underline)),
+                child: Text(
+                  'Retry',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ),
             ],
           ],
@@ -1368,11 +1459,17 @@ class FontCard extends StatelessWidget {
                     ),
                   ),
                   if (isSelected)
-                    Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary, size: 20)
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    )
                   else
                     Icon(
                       Icons.circle_outlined,
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.4,
+                      ),
                       size: 20,
                     ),
                 ],
@@ -1381,9 +1478,14 @@ class FontCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSecondarySurface : const Color(0xFFEBEBEB),
+                      color: isDark
+                          ? AppColors.darkSecondarySurface
+                          : const Color(0xFFEBEBEB),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -1399,7 +1501,10 @@ class FontCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       font.variantsLabel,
-                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 11),
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1423,7 +1528,10 @@ class FontCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 font.description,
-                style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1489,7 +1597,10 @@ class _FadeInBatchState extends State<FadeInBatch>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: FadeInBatch.duration);
+    _controller = AnimationController(
+      vsync: this,
+      duration: FadeInBatch.duration,
+    );
     _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _animates = widget.index >= widget.fadeFrom;
     if (_animates) {
@@ -1508,8 +1619,8 @@ class _FadeInBatchState extends State<FadeInBatch>
   @override
   Widget build(BuildContext context) =>
       !_animates || MediaQuery.disableAnimationsOf(context)
-          ? widget.child
-          : FadeTransition(opacity: _opacity, child: widget.child);
+      ? widget.child
+      : FadeTransition(opacity: _opacity, child: widget.child);
 }
 
 class HomeScreen extends StatelessWidget {
@@ -1547,11 +1658,16 @@ class HomeScreen extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSecondarySurface : AppColors.charcoal,
+                      color: isDark
+                          ? AppColors.darkSecondarySurface
+                          : AppColors.charcoal,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: theme.dividerColor),
                     ),
-                    child: const Icon(Icons.text_fields_rounded, color: Colors.white),
+                    child: const Icon(
+                      Icons.text_fields_rounded,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Column(
@@ -1579,7 +1695,9 @@ class HomeScreen extends StatelessWidget {
                   // Theme Switcher Button (Requirement 4)
                   IconButton(
                     onPressed: onToggleTheme,
-                    tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                    tooltip: isDark
+                        ? 'Switch to Light Mode'
+                        : 'Switch to Dark Mode',
                     icon: Icon(
                       isDark ? Icons.nightlight_round : Icons.wb_sunny_rounded,
                       color: theme.colorScheme.onSurface,
@@ -1589,12 +1707,31 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 30),
-              Text('Make every word', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, height: 1.1, color: theme.colorScheme.onSurface)),
-              Text('feel different.', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w300, height: 1.1, color: theme.colorScheme.onSurface)),
+              Text(
+                'Make every word',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              Text(
+                'feel different.',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w300,
+                  height: 1.1,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
               const SizedBox(height: 12),
               Text(
                 'Explore typefaces, test your own text, and discover the right typography for every idea.',
-                style: TextStyle(color: theme.colorScheme.onSurfaceVariant, height: 1.5),
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 20),
               FilledButton.icon(
@@ -1602,13 +1739,20 @@ class HomeScreen extends StatelessWidget {
                 icon: const Icon(Icons.explore_outlined),
                 label: const Text('Explore fonts'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: isDark ? AppColors.darkPrimaryAccent : AppColors.charcoal,
-                  foregroundColor: isDark ? AppColors.darkBackground : Colors.white,
+                  backgroundColor: isDark
+                      ? AppColors.darkPrimaryAccent
+                      : AppColors.charcoal,
+                  foregroundColor: isDark
+                      ? AppColors.darkBackground
+                      : Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
               ),
               const SizedBox(height: 24),
-              const SectionHeading(title: 'Your current font', subtitle: 'Selected typeface preview'),
+              const SectionHeading(
+                title: 'Your current font',
+                subtitle: 'Selected typeface preview',
+              ),
               const SizedBox(height: 12),
               Card(
                 child: Padding(
@@ -1621,20 +1765,37 @@ class HomeScreen extends StatelessWidget {
                           Expanded(
                             child: Text(
                               selectedFont.name,
-                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: theme.colorScheme.onSurface),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 17,
+                                color: theme.colorScheme.onSurface,
+                              ),
                             ),
                           ),
-                          Icon(Icons.check_circle, size: 19, color: theme.colorScheme.primary),
+                          Icon(
+                            Icons.check_circle,
+                            size: 19,
+                            color: theme.colorScheme.primary,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
                       FontText(
                         fontFamily: selectedFont.name,
                         text: 'Aa Bb Cc 123',
-                        style: TextStyle(fontSize: 38, color: theme.colorScheme.onSurface),
+                        style: TextStyle(
+                          fontSize: 38,
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      Text(selectedFont.description, style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
+                      Text(
+                        selectedFont.description,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       OutlinedButton.icon(
                         onPressed: onPreview,
@@ -1649,30 +1810,79 @@ class HomeScreen extends StatelessWidget {
               SectionHeading(
                 title: 'Popular typefaces',
                 subtitle: 'A few styles to get you started',
-                trailing: TextButton(onPressed: onExplore, child: const Text('See all')),
-              ),
-              const SizedBox(height: 12),
-              ...availableFonts.take(3).map(
-                (font) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: FontCard(
-                    font: font,
-                    isSelected: selectedFont.name == font.name,
-                    onTap: () => onSelectFont(font),
-                  ),
+                trailing: TextButton(
+                  onPressed: onExplore,
+                  child: const Text('See all'),
                 ),
               ),
-              const SizedBox(height: 10),
-              const SectionHeading(title: 'Typography styles', subtitle: 'One family, many levels of hierarchy'),
               const SizedBox(height: 12),
-              _StyleSample(font: selectedFont.name, label: 'Display', size: 34, weight: FontWeight.w700),
-              _StyleSample(font: selectedFont.name, label: 'Heading 1', size: 28, weight: FontWeight.w700),
-              _StyleSample(font: selectedFont.name, label: 'Heading 2', size: 23, weight: FontWeight.w600),
-              _StyleSample(font: selectedFont.name, label: 'Heading 3', size: 19, weight: FontWeight.w600),
-              _StyleSample(font: selectedFont.name, label: 'Subtitle', size: 16, weight: FontWeight.w500),
-              _StyleSample(font: selectedFont.name, label: 'Body text', size: 14, weight: FontWeight.w400),
-              _StyleSample(font: selectedFont.name, label: 'Caption', size: 12, weight: FontWeight.w400),
-              _StyleSample(font: selectedFont.name, label: 'Bold / Italic', size: 15, weight: FontWeight.w700, italic: true),
+              ...availableFonts
+                  .take(3)
+                  .map(
+                    (font) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: FontCard(
+                        font: font,
+                        isSelected: selectedFont.name == font.name,
+                        onTap: () => onSelectFont(font),
+                      ),
+                    ),
+                  ),
+              const SizedBox(height: 10),
+              const SectionHeading(
+                title: 'Typography styles',
+                subtitle: 'One family, many levels of hierarchy',
+              ),
+              const SizedBox(height: 12),
+              _StyleSample(
+                font: selectedFont.name,
+                label: 'Display',
+                size: 34,
+                weight: FontWeight.w700,
+              ),
+              _StyleSample(
+                font: selectedFont.name,
+                label: 'Heading 1',
+                size: 28,
+                weight: FontWeight.w700,
+              ),
+              _StyleSample(
+                font: selectedFont.name,
+                label: 'Heading 2',
+                size: 23,
+                weight: FontWeight.w600,
+              ),
+              _StyleSample(
+                font: selectedFont.name,
+                label: 'Heading 3',
+                size: 19,
+                weight: FontWeight.w600,
+              ),
+              _StyleSample(
+                font: selectedFont.name,
+                label: 'Subtitle',
+                size: 16,
+                weight: FontWeight.w500,
+              ),
+              _StyleSample(
+                font: selectedFont.name,
+                label: 'Body text',
+                size: 14,
+                weight: FontWeight.w400,
+              ),
+              _StyleSample(
+                font: selectedFont.name,
+                label: 'Caption',
+                size: 12,
+                weight: FontWeight.w400,
+              ),
+              _StyleSample(
+                font: selectedFont.name,
+                label: 'Bold / Italic',
+                size: 15,
+                weight: FontWeight.w700,
+                italic: true,
+              ),
             ]),
           ),
         ),
@@ -1682,7 +1892,13 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _StyleSample extends StatelessWidget {
-  const _StyleSample({required this.font, required this.label, required this.size, required this.weight, this.italic = false});
+  const _StyleSample({
+    required this.font,
+    required this.label,
+    required this.size,
+    required this.weight,
+    this.italic = false,
+  });
 
   final String font;
   final String label;
@@ -1700,7 +1916,13 @@ class _StyleSample extends StatelessWidget {
         children: [
           SizedBox(
             width: 94,
-            child: Text('$label\n${size.toInt()} px', style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant)),
+            child: Text(
+              '$label\n${size.toInt()} px',
+              style: TextStyle(
+                fontSize: 11,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
           Expanded(
             child: FontText(
@@ -1882,7 +2104,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     _isScrolled.value = position.pixels > 4;
     _scrollRatio.value = (position.pixels / 60.0).clamp(0.0, 1.0);
     _updateScrollTop(position.pixels);
-    if (position.pixels >= position.maxScrollExtent - _loadMoreTriggerDistance) {
+    if (position.pixels >=
+        position.maxScrollExtent - _loadMoreTriggerDistance) {
       unawaited(_loadMore());
     }
   }
@@ -1919,11 +2142,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
       if (MediaQuery.disableAnimationsOf(context)) {
         position.jumpTo(0);
       } else {
-        unawaited(_scrollController.animateTo(
-          0,
-          duration: const Duration(milliseconds: 480),
-          curve: Curves.easeOutCubic,
-        ));
+        unawaited(
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 480),
+            curve: Curves.easeOutCubic,
+          ),
+        );
       }
     }
     _fabHideTimer?.cancel();
@@ -1937,7 +2162,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final catalogueId = ++_catalogueRequestId;
 
     if (_useOfflineCatalog) {
-      _catalogueEntries = _sortEntries(availableFonts.map(CatalogueEntry.fromModel).toList());
+      _catalogueEntries = _sortEntries(
+        availableFonts.map(CatalogueEntry.fromModel).toList(),
+      );
       _rebuildResults();
       _scheduleViewportFillCheck();
       return;
@@ -1966,14 +2193,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
       _isLoading = false;
       _errorMessage = e.message;
       _isMissingApiKey = e.isMissingApiKey;
-      _catalogueEntries = _sortEntries(availableFonts.map(CatalogueEntry.fromModel).toList());
+      _catalogueEntries = _sortEntries(
+        availableFonts.map(CatalogueEntry.fromModel).toList(),
+      );
       _rebuildResults();
       _scheduleViewportFillCheck();
     } catch (e) {
       if (!mounted || catalogueId != _catalogueRequestId) return;
       _isLoading = false;
       _errorMessage = 'An unexpected error occurred: $e';
-      _catalogueEntries = _sortEntries(availableFonts.map(CatalogueEntry.fromModel).toList());
+      _catalogueEntries = _sortEntries(
+        availableFonts.map(CatalogueEntry.fromModel).toList(),
+      );
       _rebuildResults();
       _scheduleViewportFillCheck();
     }
@@ -2004,10 +2235,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final seenNames = <String>{};
 
     for (final entry in _catalogueEntries) {
-      final matchesQuery = normalizedQuery.isEmpty ||
+      final matchesQuery =
+          normalizedQuery.isEmpty ||
           entry.searchName.contains(normalizedQuery) ||
           entry.searchCategory.contains(normalizedQuery);
-      final matchesCategory = _selectedCategory == 'All' ||
+      final matchesCategory =
+          _selectedCategory == 'All' ||
           entry.searchCategory == normalizedCategory;
       if (matchesQuery && matchesCategory && seenNames.add(entry.searchName)) {
         filtered.add(entry);
@@ -2254,22 +2487,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           segments: const [
                             ButtonSegment(
                               value: FontSortOrder.popularity,
-                              label: Text('Popular', style: TextStyle(fontSize: 11)),
+                              label: Text(
+                                'Popular',
+                                style: TextStyle(fontSize: 11),
+                              ),
                               icon: Icon(Icons.star_outline_rounded, size: 14),
                             ),
                             ButtonSegment(
                               value: FontSortOrder.alphabetical,
-                              label: Text('A–Z', style: TextStyle(fontSize: 11)),
+                              label: Text(
+                                'A–Z',
+                                style: TextStyle(fontSize: 11),
+                              ),
                               icon: Icon(Icons.sort_by_alpha_rounded, size: 14),
                             ),
                             ButtonSegment(
                               value: FontSortOrder.trending,
-                              label: Text('Trending', style: TextStyle(fontSize: 11)),
+                              label: Text(
+                                'Trending',
+                                style: TextStyle(fontSize: 11),
+                              ),
                               icon: Icon(Icons.trending_up_rounded, size: 14),
                             ),
                           ],
                           selected: {_sortOrder},
-                          onSelectionChanged: (values) => _handleSortChanged(values.first),
+                          onSelectionChanged: (values) =>
+                              _handleSortChanged(values.first),
                           style: const ButtonStyle(
                             visualDensity: VisualDensity.compact,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -2295,11 +2538,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               _selectedCategory = cat;
                               _rebuildResults();
                             },
-                            selectedColor: isDark ? AppColors.darkBorder : const Color(0xFFE2E2E2),
+                            selectedColor: isDark
+                                ? AppColors.darkBorder
+                                : const Color(0xFFE2E2E2),
                             checkmarkColor: theme.colorScheme.primary,
                             labelStyle: TextStyle(
                               fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                               color: theme.colorScheme.onSurface,
                             ),
                           ),
@@ -2339,7 +2586,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       if (!FontApiConfig.hasValidApiKey && !_useOfflineCatalog)
                         Text(
                           'Demo / Offline mode',
-                          style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                     ],
                   ),
@@ -2356,7 +2606,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircularProgressIndicator(color: theme.colorScheme.primary),
+                        CircularProgressIndicator(
+                          color: theme.colorScheme.primary,
+                        ),
                         const SizedBox(height: 20),
                         Text(
                           'Fetching Google Fonts catalogue...',
@@ -2369,7 +2621,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         const SizedBox(height: 6),
                         Text(
                           'Connecting to Google Fonts Developer API',
-                          style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -2384,7 +2639,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.search_off_rounded, size: 48, color: theme.disabledColor),
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 48,
+                          color: theme.disabledColor,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'No matching font families found',
@@ -2398,7 +2657,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         Text(
                           'No fonts matched "$_query" with category "$_selectedCategory".',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         OutlinedButton.icon(
@@ -2418,12 +2680,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               // High-performance lazy-loading list builder for font cards. Only the
               // families the paginator has revealed are built.
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  0,
-                  20,
-                  24,
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                 sliver: SliverList.builder(
                   key: const Key('font-list'),
                   itemCount: visibleEntries.length,
@@ -2537,7 +2794,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
           const SizedBox(width: 12),
           Text(
             'Loading more fonts...',
-            style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       );
@@ -2548,21 +2808,30 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Flexible(
             child: Text(
               _loadMoreError!,
-              style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           const SizedBox(width: 12),
           OutlinedButton(
             onPressed: _retryLoadMore,
-            style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+            ),
             child: const Text('Retry'),
           ),
         ],
       );
-    } else if (!_paginator.hasMore && totalCount > FontPaginator.defaultPageSize) {
+    } else if (!_paginator.hasMore &&
+        totalCount > FontPaginator.defaultPageSize) {
       content = Text(
         'All $totalCount font families loaded.',
-        style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+        style: TextStyle(
+          fontSize: 12,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       );
     } else {
       content = const SizedBox.shrink();
@@ -2584,7 +2853,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: isDark ? AppColors.darkSurface : const Color(0xFFF9F9F9),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: theme.dividerColor)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: theme.dividerColor),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -2592,30 +2864,54 @@ class _ExploreScreenState extends State<ExploreScreen> {
           children: [
             Row(
               children: [
-                Icon(_isMissingApiKey ? Icons.key_outlined : Icons.cloud_off_rounded, color: theme.colorScheme.onSurfaceVariant, size: 20),
+                Icon(
+                  _isMissingApiKey
+                      ? Icons.key_outlined
+                      : Icons.cloud_off_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    _isMissingApiKey ? 'Google Fonts API key required for live catalogue' : 'Could not connect to Google Fonts API',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: theme.colorScheme.onSurface),
+                    _isMissingApiKey
+                        ? 'Google Fonts API key required for live catalogue'
+                        : 'Could not connect to Google Fonts API',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(_errorMessage ?? 'Network error.', style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface, height: 1.4)),
+            Text(
+              _errorMessage ?? 'Network error.',
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onSurface,
+                height: 1.4,
+              ),
+            ),
             const SizedBox(height: 14),
             Wrap(
               spacing: 10,
               runSpacing: 8,
               children: [
                 FilledButton.icon(
-                  onPressed: () => unawaited(_fetchCatalogue(forceRefresh: true)),
+                  onPressed: () =>
+                      unawaited(_fetchCatalogue(forceRefresh: true)),
                   icon: const Icon(Icons.refresh_rounded, size: 16),
                   label: const Text('Retry'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: isDark ? AppColors.darkPrimaryAccent : AppColors.charcoal,
-                    foregroundColor: isDark ? AppColors.darkBackground : Colors.white,
+                    backgroundColor: isDark
+                        ? AppColors.darkPrimaryAccent
+                        : AppColors.charcoal,
+                    foregroundColor: isDark
+                        ? AppColors.darkBackground
+                        : Colors.white,
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
@@ -2623,14 +2919,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   onPressed: () {
                     _useOfflineCatalog = true;
                     _errorMessage = null;
-                    _catalogueEntries =
-                        _sortEntries(availableFonts.map(CatalogueEntry.fromModel).toList());
+                    _catalogueEntries = _sortEntries(
+                      availableFonts.map(CatalogueEntry.fromModel).toList(),
+                    );
                     _rebuildResults();
                     _scheduleViewportFillCheck();
                   },
                   icon: const Icon(Icons.inventory_2_outlined, size: 16),
                   label: const Text('Use offline catalogue'),
-                  style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
               ],
             ),
@@ -2651,12 +2950,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
         padding: const EdgeInsets.all(14),
         child: Row(
           children: [
-            Icon(Icons.info_outline, size: 18, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.info_outline,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Browsing bundled offline fonts. Connect with your API key to search the entire online catalogue.',
-                style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
             ),
             TextButton(
@@ -2735,10 +3041,14 @@ class _SearchBarState extends State<_SearchBar> {
         ? Colors.white.withValues(alpha: _isFocused ? 0.35 : 0.09)
         : Colors.black.withValues(alpha: _isFocused ? 0.40 : 0.10);
 
-    final accentColor = isDark ? const Color(0xFF3B82F6) : const Color(0xFF2563EB);
+    final accentColor = isDark
+        ? const Color(0xFF3B82F6)
+        : const Color(0xFF2563EB);
     final borderColor = _isFocused ? accentColor : baseBorderColor;
 
-    final isApple = theme.platform == TargetPlatform.macOS || theme.platform == TargetPlatform.iOS;
+    final isApple =
+        theme.platform == TargetPlatform.macOS ||
+        theme.platform == TargetPlatform.iOS;
     final shortcutLabel = isApple ? '⌘K' : 'Ctrl+K';
 
     return CallbackShortcuts(
@@ -2797,7 +3107,9 @@ class _SearchBarState extends State<_SearchBar> {
                     size: 20,
                     color: _isFocused
                         ? accentColor
-                        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
+                        : theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.75,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -2818,7 +3130,9 @@ class _SearchBarState extends State<_SearchBar> {
                       hintStyle: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w400,
-                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.65,
+                        ),
                       ),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
@@ -2845,31 +3159,35 @@ class _SearchBarState extends State<_SearchBar> {
                           onPressed: widget.onClear,
                         )
                       : (!_isFocused
-                          ? Container(
-                              key: const ValueKey('kbd-tag'),
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.07)
-                                    : Colors.black.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(5),
-                                border: Border.all(
+                            ? Container(
+                                key: const ValueKey('kbd-tag'),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
                                   color: isDark
-                                      ? Colors.white.withValues(alpha: 0.10)
-                                      : Colors.black.withValues(alpha: 0.08),
+                                      ? Colors.white.withValues(alpha: 0.07)
+                                      : Colors.black.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.10)
+                                        : Colors.black.withValues(alpha: 0.08),
+                                  ),
                                 ),
-                              ),
-                              child: Text(
-                                shortcutLabel,
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'monospace',
-                                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                child: Text(
+                                  shortcutLabel,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'monospace',
+                                    color: theme.colorScheme.onSurfaceVariant
+                                        .withValues(alpha: 0.7),
+                                  ),
                                 ),
-                              ),
-                            )
-                          : const SizedBox(key: ValueKey('empty'), width: 4)),
+                              )
+                            : const SizedBox(key: ValueKey('empty'), width: 4)),
                 ),
               ],
             ),
@@ -2925,16 +3243,26 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   String get _weightLabel {
     switch (widget.fontWeight) {
-      case FontWeight.w100: return 'Thin';
-      case FontWeight.w200: return 'Extra Light';
-      case FontWeight.w300: return 'Light';
-      case FontWeight.w400: return 'Regular';
-      case FontWeight.w500: return 'Medium';
-      case FontWeight.w600: return 'Semi Bold';
-      case FontWeight.w700: return 'Bold';
-      case FontWeight.w800: return 'Extra Bold';
-      case FontWeight.w900: return 'Black';
-      default: return 'Regular';
+      case FontWeight.w100:
+        return 'Thin';
+      case FontWeight.w200:
+        return 'Extra Light';
+      case FontWeight.w300:
+        return 'Light';
+      case FontWeight.w400:
+        return 'Regular';
+      case FontWeight.w500:
+        return 'Medium';
+      case FontWeight.w600:
+        return 'Semi Bold';
+      case FontWeight.w700:
+        return 'Bold';
+      case FontWeight.w800:
+        return 'Extra Bold';
+      case FontWeight.w900:
+        return 'Black';
+      default:
+        return 'Regular';
     }
   }
 
@@ -2947,7 +3275,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
         ? 'The quick brown fox jumps over the lazy dog.'
         : widget.controller.text;
 
-    final isBuiltIn = FontService.isGoogleFontsSupported(widget.selectedFont.name);
+    final isBuiltIn = FontService.isGoogleFontsSupported(
+      widget.selectedFont.name,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2965,7 +3295,11 @@ class _PreviewScreenState extends State<PreviewScreen> {
                   Expanded(
                     child: Text(
                       'Typography tester',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: theme.colorScheme.onSurface),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
                   ),
                   TextButton.icon(
@@ -2991,52 +3325,88 @@ class _PreviewScreenState extends State<PreviewScreen> {
                         children: [
                           Text(
                             'LIVE PREVIEW',
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2, color: theme.colorScheme.onSurfaceVariant),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                           const Spacer(),
                           Text(
                             widget.selectedFont.name,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.onSurface,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: isDark ? AppColors.darkSecondarySurface : const Color(0xFFECECEC),
+                              color: isDark
+                                  ? AppColors.darkSecondarySurface
+                                  : const Color(0xFFECECEC),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               widget.selectedFont.category,
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: isDark ? AppColors.darkSecondarySurface : const Color(0xFFF2F2F2),
+                              color: isDark
+                                  ? AppColors.darkSecondarySurface
+                                  : const Color(0xFFF2F2F2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               isBuiltIn ? 'google_fonts' : 'FontLoader',
-                              style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurfaceVariant),
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       ConstrainedBox(
-                        constraints: const BoxConstraints(minHeight: 52, maxHeight: 130),
+                        constraints: const BoxConstraints(
+                          minHeight: 52,
+                          maxHeight: 130,
+                        ),
                         child: Center(
                           child: SingleChildScrollView(
                             child: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 180),
                               child: FontText(
-                                key: ValueKey('${widget.selectedFont.name}-${widget.fontSize.toInt()}-${widget.fontWeight}-${widget.textAlign}-$previewText'),
+                                key: ValueKey(
+                                  '${widget.selectedFont.name}-${widget.fontSize.toInt()}-${widget.fontWeight}-${widget.textAlign}-$previewText',
+                                ),
                                 fontFamily: widget.selectedFont.name,
                                 text: previewText,
                                 textAlign: widget.textAlign,
-                                style: TextStyle(fontSize: widget.fontSize, fontWeight: widget.fontWeight, color: theme.colorScheme.onSurface, height: 1.25),
+                                style: TextStyle(
+                                  fontSize: widget.fontSize,
+                                  fontWeight: widget.fontWeight,
+                                  color: theme.colorScheme.onSurface,
+                                  height: 1.25,
+                                ),
                               ),
                             ),
                           ),
@@ -3057,7 +3427,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
             color: theme.dividerColor,
             boxShadow: [
               BoxShadow(
-                color: theme.shadowColor.withValues(alpha: isDark ? 0.35 : 0.08),
+                color: theme.shadowColor.withValues(
+                  alpha: isDark ? 0.35 : 0.08,
+                ),
                 offset: const Offset(0, 2),
                 blurRadius: 4,
               ),
@@ -3083,7 +3455,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
                   child: TextField(
                     controller: widget.controller,
                     maxLines: 2,
-                    decoration: const InputDecoration(hintText: 'Type something to preview...', isDense: true),
+                    decoration: const InputDecoration(
+                      hintText: 'Type something to preview...',
+                      isDense: true,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -3105,14 +3480,20 @@ class _PreviewScreenState extends State<PreviewScreen> {
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: (widget.selectedFont.weights.isEmpty ? const [FontWeight.w400] : widget.selectedFont.weights).map((weight) {
-                      final label = _formatWeightChip(weight);
-                      return ChoiceChip(
-                        label: Text(label),
-                        selected: widget.fontWeight == weight,
-                        onSelected: (_) => widget.onFontWeightChanged(weight),
-                      );
-                    }).toList(),
+                    children:
+                        (widget.selectedFont.weights.isEmpty
+                                ? const [FontWeight.w400]
+                                : widget.selectedFont.weights)
+                            .map((weight) {
+                              final label = _formatWeightChip(weight);
+                              return ChoiceChip(
+                                label: Text(label),
+                                selected: widget.fontWeight == weight,
+                                onSelected: (_) =>
+                                    widget.onFontWeightChanged(weight),
+                              );
+                            })
+                            .toList(),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -3120,12 +3501,25 @@ class _PreviewScreenState extends State<PreviewScreen> {
                   title: 'Text alignment',
                   child: SegmentedButton<TextAlign>(
                     segments: const [
-                      ButtonSegment(value: TextAlign.left, icon: Icon(Icons.format_align_left), label: Text('Left')),
-                      ButtonSegment(value: TextAlign.center, icon: Icon(Icons.format_align_center), label: Text('Center')),
-                      ButtonSegment(value: TextAlign.right, icon: Icon(Icons.format_align_right), label: Text('Right')),
+                      ButtonSegment(
+                        value: TextAlign.left,
+                        icon: Icon(Icons.format_align_left),
+                        label: Text('Left'),
+                      ),
+                      ButtonSegment(
+                        value: TextAlign.center,
+                        icon: Icon(Icons.format_align_center),
+                        label: Text('Center'),
+                      ),
+                      ButtonSegment(
+                        value: TextAlign.right,
+                        icon: Icon(Icons.format_align_right),
+                        label: Text('Right'),
+                      ),
                     ],
                     selected: {widget.textAlign},
-                    onSelectionChanged: (values) => widget.onTextAlignChanged(values.first),
+                    onSelectionChanged: (values) =>
+                        widget.onTextAlignChanged(values.first),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -3133,13 +3527,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
                   onPressed: widget.onReset,
                   icon: const Icon(Icons.restart_alt_rounded),
                   label: const Text('Reset preview settings'),
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   'Fonts are dynamically fetched when requested and cached in memory to eliminate duplicate downloads. '
                   'Newly discovered Google Fonts catalogue families are dynamically registered via Flutter\'s FontLoader.',
-                  style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant, height: 1.4),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -3151,16 +3551,26 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   static String _formatWeightChip(FontWeight weight) {
     switch (weight) {
-      case FontWeight.w100: return 'Thin (100)';
-      case FontWeight.w200: return 'Extra Light (200)';
-      case FontWeight.w300: return 'Light (300)';
-      case FontWeight.w400: return 'Regular (400)';
-      case FontWeight.w500: return 'Medium (500)';
-      case FontWeight.w600: return 'Semi Bold (600)';
-      case FontWeight.w700: return 'Bold (700)';
-      case FontWeight.w800: return 'Extra Bold (800)';
-      case FontWeight.w900: return 'Black (900)';
-      default: return 'Regular';
+      case FontWeight.w100:
+        return 'Thin (100)';
+      case FontWeight.w200:
+        return 'Extra Light (200)';
+      case FontWeight.w300:
+        return 'Light (300)';
+      case FontWeight.w400:
+        return 'Regular (400)';
+      case FontWeight.w500:
+        return 'Medium (500)';
+      case FontWeight.w600:
+        return 'Semi Bold (600)';
+      case FontWeight.w700:
+        return 'Bold (700)';
+      case FontWeight.w800:
+        return 'Extra Bold (800)';
+      case FontWeight.w900:
+        return 'Black (900)';
+      default:
+        return 'Regular';
     }
   }
 }
@@ -3183,8 +3593,23 @@ class _ControlCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text(title, style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface))),
-                if (trailing != null) Text(trailing!, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                if (trailing != null)
+                  Text(
+                    trailing!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 12),
@@ -3257,9 +3682,12 @@ class _TypeStudioAppState extends State<TypeStudioApp> {
       _selectedTab = 2;
     });
 
-    FontService.instance.ensureFontLoaded(font.name, font: font).then((_) {
-      if (mounted) setState(() {});
-    }).catchError((_) {});
+    FontService.instance
+        .ensureFontLoaded(font.name, font: font)
+        .then((_) {
+          if (mounted) setState(() {});
+        })
+        .catchError((_) {});
   }
 
   void _resetPreview() {
@@ -3282,10 +3710,7 @@ class _TypeStudioAppState extends State<TypeStudioApp> {
         isDarkMode: _isDarkMode,
         onToggleTheme: _toggleTheme,
       ),
-      ExploreScreen(
-        selectedFont: _selectedFont,
-        onSelectFont: _selectFont,
-      ),
+      ExploreScreen(selectedFont: _selectedFont, onSelectFont: _selectFont),
       PreviewScreen(
         selectedFont: _selectedFont,
         controller: _previewController,
@@ -3308,10 +3733,7 @@ class _TypeStudioAppState extends State<TypeStudioApp> {
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       home: Scaffold(
         body: SafeArea(
-          child: IndexedStack(
-            index: _selectedTab,
-            children: pages,
-          ),
+          child: IndexedStack(index: _selectedTab, children: pages),
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _selectedTab,

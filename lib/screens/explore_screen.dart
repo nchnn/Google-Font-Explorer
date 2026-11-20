@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
+
 import 'package:material_ui/material_ui.dart';
 
 import '../config/google_fonts_config.dart';
@@ -22,8 +23,8 @@ import '../widgets/offline_banner.dart';
 /// Google Fonts Developer API catalogue, with debounced live search filtering,
 /// category filtering, sorting (popularity, A–Z, trending), and error handling.
 ///
-/// The catalogue itself downloads once — `webfonts/v1` has no pagination
-/// parameters — and [FontPaginator] reveals it [FontPaginator.defaultPageSize]
+/// The catalogue itself downloads once: `webfonts/v1` has no pagination
+/// parameters, and [FontPaginator] reveals it [FontPaginator.defaultPageSize]
 /// families at a time as the user reaches the bottom of the list.
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({
@@ -54,7 +55,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   static const Duration kSearchDebounce = Duration(milliseconds: 300);
 
   // ---------------------------------------------------------------------------
-  // State look-up helpers — fall back to AppState when constructor params are
+  // State look-up helpers: fall back to AppState when constructor params are
   // null, which is the production case. Tests can still pass explicit values.
   // ---------------------------------------------------------------------------
 
@@ -162,7 +163,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
-    _paginator = widget.debugPaginator ??
+    _paginator =
+        widget.debugPaginator ??
         FontPaginator<CatalogueEntry>(idOf: (e) => e.name);
     _scrollController.addListener(_handleScroll);
     _fetchCatalogue();
@@ -207,7 +209,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     _isScrolled.value = position.pixels > 4;
     _scrollRatio.value = (position.pixels / 60.0).clamp(0.0, 1.0);
     _updateScrollTop(position.pixels);
-    if (position.pixels >= position.maxScrollExtent - _loadMoreTriggerDistance) {
+    if (position.pixels >=
+        position.maxScrollExtent - _loadMoreTriggerDistance) {
       unawaited(_loadMore());
     }
   }
@@ -244,11 +247,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
       if (MediaQuery.disableAnimationsOf(context)) {
         position.jumpTo(0);
       } else {
-        unawaited(_scrollController.animateTo(
-          0,
-          duration: const Duration(milliseconds: 480),
-          curve: Curves.easeOutCubic,
-        ));
+        unawaited(
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 480),
+            curve: Curves.easeOutCubic,
+          ),
+        );
       }
     }
     _fabHideTimer?.cancel();
@@ -262,8 +267,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final catalogueId = ++_catalogueRequestId;
 
     if (_useOfflineCatalog) {
-      _catalogueEntries =
-          _sortEntries(availableFonts.map(CatalogueEntry.fromModel).toList());
+      _catalogueEntries = _sortEntries(
+        availableFonts.map(CatalogueEntry.fromModel).toList(),
+      );
       _rebuildResults();
       _scheduleViewportFillCheck();
       return;
@@ -299,16 +305,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
       _isLoading = false;
       _errorMessage = e.message;
       _isMissingApiKey = e.isMissingApiKey;
-      _catalogueEntries =
-          _sortEntries(availableFonts.map(CatalogueEntry.fromModel).toList());
+      _catalogueEntries = _sortEntries(
+        availableFonts.map(CatalogueEntry.fromModel).toList(),
+      );
       _rebuildResults();
       _scheduleViewportFillCheck();
     } catch (e) {
       if (!mounted || catalogueId != _catalogueRequestId) return;
       _isLoading = false;
       _errorMessage = 'An unexpected error occurred: $e';
-      _catalogueEntries =
-          _sortEntries(availableFonts.map(CatalogueEntry.fromModel).toList());
+      _catalogueEntries = _sortEntries(
+        availableFonts.map(CatalogueEntry.fromModel).toList(),
+      );
       _rebuildResults();
       _scheduleViewportFillCheck();
     }
@@ -331,9 +339,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       }
 
       // Check if user has interacted:
-      final isScrollNearTop = !_scrollController.hasClients ||
+      final isScrollNearTop =
+          !_scrollController.hasClients ||
           _scrollController.position.pixels <= 10;
-      final hasNotInteracted = _query.isEmpty &&
+      final hasNotInteracted =
+          _query.isEmpty &&
           _selectedCategory == 'All' &&
           _paginator.visibleCount <= FontPaginator.defaultPageSize &&
           isScrollNearTop &&
@@ -386,10 +396,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final seenNames = <String>{};
 
     for (final entry in _catalogueEntries) {
-      final matchesQuery = normalizedQuery.isEmpty ||
+      final matchesQuery =
+          normalizedQuery.isEmpty ||
           entry.searchName.contains(normalizedQuery) ||
           entry.searchCategory.contains(normalizedQuery);
-      final matchesCategory = _selectedCategory == 'All' ||
+      final matchesCategory =
+          _selectedCategory == 'All' ||
           entry.searchCategory == normalizedCategory;
       if (matchesQuery && matchesCategory && seenNames.add(entry.searchName)) {
         filtered.add(entry);
@@ -652,22 +664,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           segments: const [
                             ButtonSegment(
                               value: FontSortOrder.popularity,
-                              label: Text('Popular', style: TextStyle(fontSize: 11)),
+                              label: Text(
+                                'Popular',
+                                style: TextStyle(fontSize: 11),
+                              ),
                               icon: Icon(Icons.star_outline_rounded, size: 14),
                             ),
                             ButtonSegment(
                               value: FontSortOrder.alphabetical,
-                              label: Text('A–Z', style: TextStyle(fontSize: 11)),
+                              label: Text(
+                                'A–Z',
+                                style: TextStyle(fontSize: 11),
+                              ),
                               icon: Icon(Icons.sort_by_alpha_rounded, size: 14),
                             ),
                             ButtonSegment(
                               value: FontSortOrder.trending,
-                              label: Text('Trending', style: TextStyle(fontSize: 11)),
+                              label: Text(
+                                'Trending',
+                                style: TextStyle(fontSize: 11),
+                              ),
                               icon: Icon(Icons.trending_up_rounded, size: 14),
                             ),
                           ],
                           selected: {_sortOrder},
-                          onSelectionChanged: (values) => _handleSortChanged(values.first),
+                          onSelectionChanged: (values) =>
+                              _handleSortChanged(values.first),
                           style: const ButtonStyle(
                             visualDensity: VisualDensity.compact,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -693,11 +715,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               _selectedCategory = cat;
                               _rebuildResults();
                             },
-                            selectedColor: isDark ? AppColors.darkBorder : const Color(0xFFE2E2E2),
+                            selectedColor: isDark
+                                ? AppColors.darkBorder
+                                : const Color(0xFFE2E2E2),
                             checkmarkColor: theme.colorScheme.primary,
                             labelStyle: TextStyle(
                               fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                               color: theme.colorScheme.onSurface,
                             ),
                           ),
@@ -712,11 +738,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     ErrorBanner(
                       errorMessage: _errorMessage,
                       isMissingApiKey: _isMissingApiKey,
-                      onRetry: () => unawaited(_fetchCatalogue(forceRefresh: true)),
+                      onRetry: () =>
+                          unawaited(_fetchCatalogue(forceRefresh: true)),
                       onUseOffline: () {
                         _useOfflineCatalog = true;
                         _errorMessage = null;
-                        _catalogueEntries = _sortEntries(availableFonts.map(CatalogueEntry.fromModel).toList());
+                        _catalogueEntries = _sortEntries(
+                          availableFonts.map(CatalogueEntry.fromModel).toList(),
+                        );
                         _rebuildResults();
                         _scheduleViewportFillCheck();
                       },
@@ -753,7 +782,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       if (!FontApiConfig.hasValidApiKey && !_useOfflineCatalog)
                         Text(
                           'Demo / Offline mode',
-                          style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                     ],
                   ),
@@ -770,7 +802,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircularProgressIndicator(color: theme.colorScheme.primary),
+                        CircularProgressIndicator(
+                          color: theme.colorScheme.primary,
+                        ),
                         const SizedBox(height: 20),
                         Text(
                           'Fetching Google Fonts catalogue...',
@@ -783,7 +817,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         const SizedBox(height: 6),
                         Text(
                           'Connecting to Google Fonts Developer API',
-                          style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -798,7 +835,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.search_off_rounded, size: 48, color: theme.disabledColor),
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 48,
+                          color: theme.disabledColor,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'No matching font families found',
@@ -812,7 +853,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         Text(
                           'No fonts matched "$_query" with category "$_selectedCategory".',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         OutlinedButton.icon(
@@ -832,12 +876,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               // High-performance lazy-loading list builder for font cards. Only the
               // families the paginator has revealed are built.
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  0,
-                  20,
-                  24,
-                ),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                 sliver: SliverList.builder(
                   key: const Key('font-list'),
                   itemCount: visibleEntries.length,
@@ -850,8 +889,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         padding: const EdgeInsets.only(bottom: 12),
                         child: FontCard(
                           font: entry.model,
-                          isSelected: _effectiveSelectedFont(context).name == entry.name,
-                          onTap: () => _effectiveOnSelectFont(context)(entry.model),
+                          isSelected:
+                              _effectiveSelectedFont(context).name ==
+                              entry.name,
+                          onTap: () =>
+                              _effectiveOnSelectFont(context)(entry.model),
                         ),
                       ),
                     );
@@ -951,7 +993,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
           const SizedBox(width: 12),
           Text(
             'Loading more fonts...',
-            style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       );
@@ -962,21 +1007,30 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Flexible(
             child: Text(
               _loadMoreError!,
-              style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           const SizedBox(width: 12),
           OutlinedButton(
             onPressed: _retryLoadMore,
-            style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+            ),
             child: const Text('Retry'),
           ),
         ],
       );
-    } else if (!_paginator.hasMore && totalCount > FontPaginator.defaultPageSize) {
+    } else if (!_paginator.hasMore &&
+        totalCount > FontPaginator.defaultPageSize) {
       content = Text(
         'All $totalCount font families loaded.',
-        style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+        style: TextStyle(
+          fontSize: 12,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       );
     } else {
       content = const SizedBox.shrink();
@@ -990,5 +1044,4 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ),
     );
   }
-
 }

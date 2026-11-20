@@ -160,13 +160,17 @@ class _FloatingPillNavigationState extends State<FloatingPillNavigation>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final background = widget.backgroundColor ??
+    final background =
+        widget.backgroundColor ??
         (isDark ? AppColors.darkSurface : AppColors.surface);
-    final indicatorColour = widget.activeIndicatorColor ??
+    final indicatorColour =
+        widget.activeIndicatorColor ??
         (isDark ? AppColors.darkSecondarySurface : const Color(0xFFE9E9E9));
-    final activeColour = widget.activeForegroundColor ??
+    final activeColour =
+        widget.activeForegroundColor ??
         (isDark ? AppColors.darkPrimaryText : AppColors.charcoal);
-    final inactiveColour = widget.inactiveForegroundColor ??
+    final inactiveColour =
+        widget.inactiveForegroundColor ??
         (isDark ? AppColors.darkSecondaryText : AppColors.secondaryText);
     final borderColour = isDark ? AppColors.darkBorder : AppColors.border;
 

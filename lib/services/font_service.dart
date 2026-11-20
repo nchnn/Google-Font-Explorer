@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart'
     show compute, debugPrint, kDebugMode, kIsWeb, visibleForTesting;
 import 'package:flutter/services.dart';
@@ -134,7 +135,6 @@ class FontService {
   /// dropped when its future fails, which keeps a failed face retryable.
   final Map<String, Future<void>> _previewFutures = {};
 
-
   /// Cached answers for [isGoogleFontsSupported], which is called per build.
   static final Map<String, bool> _googleFontsSupport = {};
 
@@ -245,10 +245,10 @@ class FontService {
   ///
   /// Example: `roboto_700_normal`, `roboto_400_italic`.
   static String faceKey(String family, int weight, {bool italic = false}) {
-    final normalized = family
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'\s+'), '_');
+    final normalized = family.trim().toLowerCase().replaceAll(
+      RegExp(r'\s+'),
+      '_',
+    );
     return '${normalized}_${weight}_${italic ? 'italic' : 'normal'}';
   }
 
@@ -464,16 +464,18 @@ class FontService {
     });
 
     _pendingFaces[key] = future;
-    future.then<void>(
-      (_) {},
-      onError: (Object error, StackTrace _) {
-        _logFace('FAILED', key, detail: '$error');
-      },
-    ).whenComplete(() {
-      if (identical(_pendingFaces[key], future)) {
-        _pendingFaces.remove(key);
-      }
-    });
+    future
+        .then<void>(
+          (_) {},
+          onError: (Object error, StackTrace _) {
+            _logFace('FAILED', key, detail: '$error');
+          },
+        )
+        .whenComplete(() {
+          if (identical(_pendingFaces[key], future)) {
+            _pendingFaces.remove(key);
+          }
+        });
 
     return future;
   }
@@ -488,11 +490,7 @@ class FontService {
     final targetFont = font ?? getFont(familyName);
 
     if (targetFont != null) {
-      await ensureFace(
-        targetFont,
-        weight: weight.value,
-        italic: italic,
-      );
+      await ensureFace(targetFont, weight: weight.value, italic: italic);
       return;
     }
 
@@ -544,7 +542,7 @@ class FontService {
       );
       future.then<void>(
         (_) {},
-        onError: (Object _, StackTrace __) {
+        onError: (Object _, StackTrace _) {
           if (identical(_previewFutures[key], future)) {
             _previewFutures.remove(key);
           }
@@ -582,8 +580,7 @@ class FontService {
 
     LoadedFontFace? exact;
     for (final face in faces) {
-      if (face.requestedWeight == weight &&
-          face.requestedItalic == italic) {
+      if (face.requestedWeight == weight && face.requestedItalic == italic) {
         exact = face;
         break;
       }
@@ -693,12 +690,7 @@ class FontService {
   }) {
     final model = getFont(familyName);
     if (model != null) {
-      return previewStyle(
-        model,
-        base,
-        weight: weight,
-        italic: italic,
-      );
+      return previewStyle(model, base, weight: weight, italic: italic);
     }
 
     final face = _nearestFace(familyName, weight.value, italic);
@@ -722,7 +714,8 @@ class FontService {
   ///
   /// Does not call `FontLoader.load`. Best-effort and swallows errors.
   Future<void> prefetchPreviewBytes(FontModel model) async {
-    final fileUrl = model.exactFileUrl(weight: 400, italic: false) ??
+    final fileUrl =
+        model.exactFileUrl(weight: 400, italic: false) ??
         model.getFileUrl(weight: FontWeight.w400, italic: false);
     if (fileUrl == null || fileUrl.isEmpty) {
       return;
@@ -885,11 +878,7 @@ class FontService {
       () => FontFileAxes.parse(bytes),
     );
 
-    final alias = _aliasFor(
-      font.name,
-      registrationWeight,
-      registrationItalic,
-    );
+    final alias = _aliasFor(font.name, registrationWeight, registrationItalic);
     if (!_registeredAliases.contains(alias)) {
       final fontLoader = FontLoader(alias);
       fontLoader.addFont(Future.value(ByteData.sublistView(bytes)));
@@ -953,7 +942,7 @@ class FontService {
     final previous = _googleTail;
     _googleTail = result.future.then<void>(
       (_) {},
-      onError: (Object _, StackTrace __) {},
+      onError: (Object _, StackTrace _) {},
     );
 
     previous.whenComplete(() {
@@ -976,21 +965,17 @@ class FontService {
 
     final future = _downloadFontBytes(secureUrl, family);
     _byteFetches[secureUrl] = future;
-    future.then<void>(
-      (_) {},
-      onError: (Object _, StackTrace __) {},
-    ).whenComplete(() {
-      if (identical(_byteFetches[secureUrl], future)) {
-        _byteFetches.remove(secureUrl);
-      }
-    });
+    future
+        .then<void>((_) {}, onError: (Object _, StackTrace _) {})
+        .whenComplete(() {
+          if (identical(_byteFetches[secureUrl], future)) {
+            _byteFetches.remove(secureUrl);
+          }
+        });
     return future;
   }
 
-  Future<Uint8List> _downloadFontBytes(
-    String secureUrl,
-    String family,
-  ) async {
+  Future<Uint8List> _downloadFontBytes(String secureUrl, String family) async {
     final cached = _cachedFontBytes(secureUrl);
     if (cached != null) {
       return cached;
@@ -1058,9 +1043,11 @@ class FontService {
     }
 
     candidates.sort((a, b) {
-      final aScore = (a.actualWeight - weight).abs() * 2 +
+      final aScore =
+          (a.actualWeight - weight).abs() * 2 +
           (a.actualItalic == italic ? 0 : 1000);
-      final bScore = (b.actualWeight - weight).abs() * 2 +
+      final bScore =
+          (b.actualWeight - weight).abs() * 2 +
           (b.actualItalic == italic ? 0 : 1000);
       return aScore.compareTo(bScore);
     });
@@ -1078,8 +1065,10 @@ class FontService {
     final renderWeight = axis == null
         ? weight
         : axis.clamp(weight.toDouble()).round();
-    final actualMatch = face.actualWeight == weight && face.actualItalic == italic;
-    final hasExact = font?.hasExactFace(weight: weight, italic: italic) ?? false;
+    final actualMatch =
+        face.actualWeight == weight && face.actualItalic == italic;
+    final hasExact =
+        font?.hasExactFace(weight: weight, italic: italic) ?? false;
     final googleSupported = isGoogleFontsSupported(familyName);
 
     final FontFaceStatus status;
@@ -1121,8 +1110,7 @@ class FontService {
       fontFamily: preview.family,
       fontFamilyFallback: preview.fallbacks,
       fontWeight: _weightFromNumber(preview.renderWeight),
-      fontStyle:
-          preview.renderItalic ? FontStyle.italic : FontStyle.normal,
+      fontStyle: preview.renderItalic ? FontStyle.italic : FontStyle.normal,
       fontVariations: variations,
       fontSize: base.fontSize,
       color: base.color,
@@ -1135,19 +1123,17 @@ class FontService {
   @visibleForTesting
   void debugCacheFace(LoadedFontFace face) {
     _faces[faceKey(
-      face.family,
-      face.requestedWeight,
-      italic: face.requestedItalic,
-    )] = face;
+          face.family,
+          face.requestedWeight,
+          italic: face.requestedItalic,
+        )] =
+        face;
   }
 
-  static String _normalizeFamily(String family) =>
-      family.trim().toLowerCase();
+  static String _normalizeFamily(String family) => family.trim().toLowerCase();
 
   static String _secureUrl(String url) {
-    return url.startsWith('http://')
-        ? 'https://${url.substring(7)}'
-        : url;
+    return url.startsWith('http://') ? 'https://${url.substring(7)}' : url;
   }
 
   static String _aliasFor(String family, int weight, bool italic) {

@@ -38,7 +38,9 @@ class ErrorBanner extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  isMissingApiKey ? Icons.key_outlined : Icons.cloud_off_rounded,
+                  isMissingApiKey
+                      ? Icons.key_outlined
+                      : Icons.cloud_off_rounded,
                   color: theme.colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
@@ -76,8 +78,12 @@ class ErrorBanner extends StatelessWidget {
                   icon: const Icon(Icons.refresh_rounded, size: 16),
                   label: const Text('Retry connection'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: isDark ? AppColors.darkPrimaryAccent : AppColors.charcoal,
-                    foregroundColor: isDark ? AppColors.darkBackground : Colors.white,
+                    backgroundColor: isDark
+                        ? AppColors.darkPrimaryAccent
+                        : AppColors.charcoal,
+                    foregroundColor: isDark
+                        ? AppColors.darkBackground
+                        : Colors.white,
                     visualDensity: VisualDensity.compact,
                   ),
                 ),

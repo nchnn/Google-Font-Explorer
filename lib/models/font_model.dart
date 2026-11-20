@@ -63,7 +63,10 @@ class FontModel {
   }
 
   /// Returns the most suitable font file URL for a given weight and style.
-  String? getFileUrl({FontWeight weight = FontWeight.w400, bool italic = false}) {
+  String? getFileUrl({
+    FontWeight weight = FontWeight.w400,
+    bool italic = false,
+  }) {
     if (files.isEmpty) {
       return null;
     }
@@ -234,8 +237,11 @@ class FontModel {
   /// Parses a Google Fonts Developer API item into a [FontModel].
   factory FontModel.fromJson(Map<String, dynamic> json) {
     final family = json['family'] as String? ?? 'Unknown';
-    final category = formatCategory(json['category'] as String? ?? 'sans-serif');
-    final variantsList = (json['variants'] as List<dynamic>?)
+    final category = formatCategory(
+      json['category'] as String? ?? 'sans-serif',
+    );
+    final variantsList =
+        (json['variants'] as List<dynamic>?)
             ?.map((e) => e.toString())
             .toList() ??
         const ['regular'];
@@ -256,62 +262,78 @@ class FontModel {
     return FontModel(
       name: family,
       category: category,
-      description: 'Google Fonts catalogue typeface with ${variantsList.length} ${variantsList.length == 1 ? 'variant' : 'variants'}.',
+      description:
+          'Google Fonts catalogue typeface with ${variantsList.length} ${variantsList.length == 1 ? 'variant' : 'variants'}.',
       weights: parsedWeights.isEmpty ? const [FontWeight.w400] : parsedWeights,
       variants: variantsList,
       files: filesMap,
-      subsets: (json['subsets'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
+      subsets:
+          (json['subsets'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       version: json['version'] as String? ?? '',
       lastModified: json['lastModified'] as String? ?? '',
     );
   }
 
-  static int _weightToNumber(FontWeight weight) {
-    switch (weight) {
-      case FontWeight.w100: return 100;
-      case FontWeight.w200: return 200;
-      case FontWeight.w300: return 300;
-      case FontWeight.w400: return 400;
-      case FontWeight.w500: return 500;
-      case FontWeight.w600: return 600;
-      case FontWeight.w700: return 700;
-      case FontWeight.w800: return 800;
-      case FontWeight.w900: return 900;
-      default: return 400;
-    }
-  }
+  static int _weightToNumber(FontWeight weight) => weight.value;
 
   static String _formatVariantName(String variant) {
     switch (variant) {
-      case 'regular': return 'Regular';
-      case 'italic': return 'Italic';
-      case '100': return 'Thin';
-      case '100italic': return 'Thin Italic';
-      case '200': return 'Extra Light';
-      case '200italic': return 'Extra Light Italic';
-      case '300': return 'Light';
-      case '300italic': return 'Light Italic';
-      case '500': return 'Medium';
-      case '500italic': return 'Medium Italic';
-      case '600': return 'Semi Bold';
-      case '600italic': return 'Semi Bold Italic';
-      case '700': return 'Bold';
-      case '700italic': return 'Bold Italic';
-      case '800': return 'Extra Bold';
-      case '800italic': return 'Extra Bold Italic';
-      case '900': return 'Black';
-      case '900italic': return 'Black Italic';
-      default: return variant;
+      case 'regular':
+        return 'Regular';
+      case 'italic':
+        return 'Italic';
+      case '100':
+        return 'Thin';
+      case '100italic':
+        return 'Thin Italic';
+      case '200':
+        return 'Extra Light';
+      case '200italic':
+        return 'Extra Light Italic';
+      case '300':
+        return 'Light';
+      case '300italic':
+        return 'Light Italic';
+      case '500':
+        return 'Medium';
+      case '500italic':
+        return 'Medium Italic';
+      case '600':
+        return 'Semi Bold';
+      case '600italic':
+        return 'Semi Bold Italic';
+      case '700':
+        return 'Bold';
+      case '700italic':
+        return 'Bold Italic';
+      case '800':
+        return 'Extra Bold';
+      case '800italic':
+        return 'Extra Bold Italic';
+      case '900':
+        return 'Black';
+      case '900italic':
+        return 'Black Italic';
+      default:
+        return variant;
     }
   }
 
   static String formatCategory(String raw) {
     switch (raw.toLowerCase()) {
-      case 'sans-serif': return 'Sans Serif';
-      case 'serif': return 'Serif';
-      case 'display': return 'Display';
-      case 'handwriting': return 'Handwriting';
-      case 'monospace': return 'Monospace';
+      case 'sans-serif':
+        return 'Sans Serif';
+      case 'serif':
+        return 'Serif';
+      case 'display':
+        return 'Display';
+      case 'handwriting':
+        return 'Handwriting';
+      case 'monospace':
+        return 'Monospace';
       default:
         if (raw.isEmpty) {
           return 'Sans Serif';

@@ -48,17 +48,11 @@ void main() {
 
     test('write stores last-used sort only under versioned key', () async {
       await store.write(FontSortOrder.popularity, '{"items":["pop"]}');
-      expect(
-        await store.read(FontSortOrder.popularity),
-        '{"items":["pop"]}',
-      );
+      expect(await store.read(FontSortOrder.popularity), '{"items":["pop"]}');
 
       // Switching sort clears other sort keys
       await store.write(FontSortOrder.trending, '{"items":["trend"]}');
-      expect(
-        await store.read(FontSortOrder.trending),
-        '{"items":["trend"]}',
-      );
+      expect(await store.read(FontSortOrder.trending), '{"items":["trend"]}');
       expect(await store.read(FontSortOrder.popularity), isNull);
     });
 

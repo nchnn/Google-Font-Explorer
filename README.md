@@ -1,4 +1,4 @@
-# TypeStudio – Google Fonts Explorer & Discovery
+# TypeStudio - Google Fonts Explorer & Discovery
 
 A Flutter application for discovering, previewing, and experimenting with typography from the Google Fonts catalogue.
 
@@ -83,7 +83,6 @@ lib/
 │   ├── catalogue_entry.dart       # Lightweight catalogue entry with lazy model parsing
 │   └── font_model.dart            # Font metadata, JSON parser, and variant weighting
 ├── screens/
-│   ├── about_screen.dart          # Project overview & dual-engine architecture info
 │   ├── explore_screen.dart        # Searchable explorer with live filtering and sorting
 │   ├── home_screen.dart           # Hero overview, current font, and type hierarchy
 │   └── preview_screen.dart        # Interactive typography tester & live controls
@@ -91,14 +90,25 @@ lib/
 │   ├── catalogue_store.dart       # Persistent & in-memory cache stores for catalogue JSON
 │   ├── font_paginator.dart        # Generic incremental batching and client-side paging
 │   └── font_service.dart          # API fetching, caching, and FontLoader dynamic loader
+├── state/
+│   └── app_state.dart             # Global application and preview state management
 ├── theme/
 │   ├── app_colors.dart            # Monochromatic palette definitions
 │   └── app_theme.dart             # Material 3 light theme configuration
+├── utils/
+│   └── font_weight_utils.dart     # Font weight name formatting helpers
 ├── widgets/
+│   ├── error_banner.dart          # Error message display with retry and offline fallback
+│   ├── explore_search_bar.dart    # Pinned search bar with keyboard shortcuts
+│   ├── fade_in_batch.dart         # Staggered batch reveal animation wrapper
+│   ├── floating_pill_navigation.dart # Floating capsule navigation bar
 │   ├── font_card.dart             # Card showing family, category, variants & preview
+│   ├── font_shelf_tile.dart       # Horizontal-scroll font showcase tile
 │   ├── font_text.dart             # Universal text widget supporting google_fonts + FontLoader
-│   └── section_heading.dart       # Section title header widget
-├── app.dart                       # Navigation and root state management
-├── dartpad_main.dart              # Single-file runnable version for DartPad
+│   ├── offline_banner.dart        # Offline indicator banner
+│   ├── style_sample.dart          # Typography hierarchy sample row
+│   └── typography_controls_card.dart # Precision slider and alignment controls
+├── app.dart                       # Navigation and root shell
+├── dartpad_main.dart              # Single-file runnable version for DartPad (standalone)
 └── main.dart                      # App entry point
 ```

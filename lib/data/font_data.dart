@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+
 import '../models/font_model.dart';
 
 const commonWeights = <FontWeight>[
@@ -9,13 +10,7 @@ const commonWeights = <FontWeight>[
   FontWeight.w700,
 ];
 
-const standardVariants = <String>[
-  '300',
-  'regular',
-  '500',
-  '600',
-  '700',
-];
+const standardVariants = <String>['300', 'regular', '500', '600', '700'];
 
 /// Bundled font catalogue used as starter fonts and offline fallback.
 const availableFonts = <FontModel>[
@@ -37,7 +32,8 @@ const availableFonts = <FontModel>[
     weights: commonWeights,
     variants: standardVariants,
     files: {
-      'regular': 'https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrFJA.ttf',
+      'regular':
+          'https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrFJA.ttf',
     },
   ),
   FontModel(
@@ -67,7 +63,8 @@ const availableFonts = <FontModel>[
     weights: commonWeights,
     variants: standardVariants,
     files: {
-      'regular': 'https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXiWtFCc.ttf',
+      'regular':
+          'https://fonts.gstatic.com/s/lato/v24/S6uyw4BMUTPHjx4wXiWtFCc.ttf',
     },
   ),
   FontModel(

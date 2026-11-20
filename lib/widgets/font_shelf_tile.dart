@@ -29,7 +29,9 @@ class FontShelfTile extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final ambientShadow = BoxShadow(
-      color: isDark ? AppColors.shadowAmbientDark : AppColors.shadowAmbientLight,
+      color: isDark
+          ? AppColors.shadowAmbientDark
+          : AppColors.shadowAmbientLight,
       blurRadius: 12,
       offset: const Offset(0, 2),
     );
@@ -44,71 +46,68 @@ class FontShelfTile extends StatelessWidget {
         : (isDark ? AppColors.darkBorder : AppColors.border);
     final borderWidth = isSelected ? 2.0 : 1.0;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        width: tileWidth,
-        height: tileHeight,
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: borderColor, width: borderWidth),
-          boxShadow: [ambientShadow, keyShadow],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(17),
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              onTap: onTap,
-              splashColor: theme.colorScheme.primary.withValues(alpha: 0.08),
-              highlightColor: theme.colorScheme.primary.withValues(alpha: 0.04),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: FontText(
-                          fontFamily: font.name,
-                          text: 'Aa',
-                          style: TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.w400,
-                            color: theme.colorScheme.onSurface,
-                            height: 1.0,
-                          ),
-                          showErrorNotice: false,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      width: tileWidth,
+      height: tileHeight,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: borderColor, width: borderWidth),
+        boxShadow: [ambientShadow, keyShadow],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(17),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            splashColor: theme.colorScheme.primary.withValues(alpha: 0.08),
+            highlightColor: theme.colorScheme.primary.withValues(alpha: 0.04),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: FontText(
+                        fontFamily: font.name,
+                        text: 'Aa',
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w400,
+                          color: theme.colorScheme.onSurface,
+                          height: 1.0,
                         ),
+                        showErrorNotice: false,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      font.name,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.1,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    font.name,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.1,
+                      color: theme.colorScheme.onSurface,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      font.category,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    font.category,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ],
-                ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ),

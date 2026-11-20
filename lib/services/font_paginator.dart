@@ -11,10 +11,8 @@ import 'dart:math' as math;
 /// It owns no timers, performs no I/O, and imports no widgets, which keeps it
 /// directly unit-testable.
 class FontPaginator<T> {
-  FontPaginator({
-    required this.idOf,
-    this.pageSize = defaultPageSize,
-  }) : assert(pageSize > 0, 'pageSize must be greater than zero');
+  FontPaginator({required this.idOf, this.pageSize = defaultPageSize})
+    : assert(pageSize > 0, 'pageSize must be greater than zero');
 
   /// Identifier extractor used for de-duplicating items.
   final String Function(T) idOf;

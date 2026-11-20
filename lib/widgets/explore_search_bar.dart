@@ -64,10 +64,14 @@ class _ExploreSearchBarState extends State<ExploreSearchBar> {
         ? Colors.white.withValues(alpha: _isFocused ? 0.35 : 0.09)
         : Colors.black.withValues(alpha: _isFocused ? 0.40 : 0.10);
 
-    final accentColor = isDark ? const Color(0xFF3B82F6) : const Color(0xFF2563EB);
+    final accentColor = isDark
+        ? const Color(0xFF3B82F6)
+        : const Color(0xFF2563EB);
     final borderColor = _isFocused ? accentColor : baseBorderColor;
 
-    final isApple = theme.platform == TargetPlatform.macOS || theme.platform == TargetPlatform.iOS;
+    final isApple =
+        theme.platform == TargetPlatform.macOS ||
+        theme.platform == TargetPlatform.iOS;
     final shortcutLabel = isApple ? '⌘K' : 'Ctrl+K';
 
     return CallbackShortcuts(
@@ -126,7 +130,9 @@ class _ExploreSearchBarState extends State<ExploreSearchBar> {
                     size: 20,
                     color: _isFocused
                         ? accentColor
-                        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
+                        : theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.75,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -147,7 +153,9 @@ class _ExploreSearchBarState extends State<ExploreSearchBar> {
                       hintStyle: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w400,
-                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.65,
+                        ),
                       ),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
@@ -174,31 +182,35 @@ class _ExploreSearchBarState extends State<ExploreSearchBar> {
                           onPressed: widget.onClear,
                         )
                       : (!_isFocused
-                          ? Container(
-                              key: const ValueKey('kbd-tag'),
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.07)
-                                    : Colors.black.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(5),
-                                border: Border.all(
+                            ? Container(
+                                key: const ValueKey('kbd-tag'),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
                                   color: isDark
-                                      ? Colors.white.withValues(alpha: 0.10)
-                                      : Colors.black.withValues(alpha: 0.08),
+                                      ? Colors.white.withValues(alpha: 0.07)
+                                      : Colors.black.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.10)
+                                        : Colors.black.withValues(alpha: 0.08),
+                                  ),
                                 ),
-                              ),
-                              child: Text(
-                                shortcutLabel,
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'monospace',
-                                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                child: Text(
+                                  shortcutLabel,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'monospace',
+                                    color: theme.colorScheme.onSurfaceVariant
+                                        .withValues(alpha: 0.7),
+                                  ),
                                 ),
-                              ),
-                            )
-                          : const SizedBox(key: ValueKey('empty'), width: 4)),
+                              )
+                            : const SizedBox(key: ValueKey('empty'), width: 4)),
                 ),
               ],
             ),

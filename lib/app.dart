@@ -12,9 +12,7 @@ class TypeStudioApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppStateProvider(
-      child: const _TypeStudioShell(),
-    );
+    return AppStateProvider(child: const _TypeStudioShell());
   }
 }
 

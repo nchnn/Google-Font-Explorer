@@ -6,24 +6,24 @@ import 'font_model.dart';
 /// is only instantiated lazily when revealed in the UI or selected.
 class CatalogueEntry {
   CatalogueEntry.fromJson(Map<String, dynamic> json)
-      : name = json['family'] as String? ?? 'Unknown',
-        category = FontModel.formatCategory(
-          json['category'] as String? ?? 'sans-serif',
-        ),
-        searchName = (json['family'] as String? ?? 'Unknown').toLowerCase(),
-        searchCategory = FontModel.formatCategory(
-          json['category'] as String? ?? 'sans-serif',
-        ).toLowerCase(),
-        raw = json,
-        _providedModel = null;
+    : name = json['family'] as String? ?? 'Unknown',
+      category = FontModel.formatCategory(
+        json['category'] as String? ?? 'sans-serif',
+      ),
+      searchName = (json['family'] as String? ?? 'Unknown').toLowerCase(),
+      searchCategory = FontModel.formatCategory(
+        json['category'] as String? ?? 'sans-serif',
+      ).toLowerCase(),
+      raw = json,
+      _providedModel = null;
 
   CatalogueEntry.fromModel(FontModel model)
-      : name = model.name,
-        category = model.category,
-        searchName = model.name.toLowerCase(),
-        searchCategory = model.category.toLowerCase(),
-        raw = null,
-        _providedModel = model;
+    : name = model.name,
+      category = model.category,
+      searchName = model.name.toLowerCase(),
+      searchCategory = model.category.toLowerCase(),
+      raw = null,
+      _providedModel = model;
 
   final String name;
   final String category;

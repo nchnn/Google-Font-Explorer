@@ -105,8 +105,10 @@ class _FontTextState extends State<FontText> {
     // 3. Otherwise, if supported by google_fonts package -> google_fonts FutureBuilder path
     if (isGoogleFonts) {
       try {
-        final googleStyle =
-            GoogleFonts.getFont(family, textStyle: widget.style);
+        final googleStyle = GoogleFonts.getFont(
+          family,
+          textStyle: widget.style,
+        );
         return FutureBuilder<void>(
           key: ValueKey('gf-$family-$_retryKey'),
           future: _pendingFor(family),

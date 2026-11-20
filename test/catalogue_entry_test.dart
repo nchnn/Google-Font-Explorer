@@ -10,9 +10,7 @@ void main() {
         'family': 'Roboto Flex',
         'category': 'sans-serif',
         'variants': ['regular', '700'],
-        'files': {
-          'regular': 'https://example.com/roboto-flex.ttf',
-        },
+        'files': {'regular': 'https://example.com/roboto-flex.ttf'},
       };
 
       final entry = CatalogueEntry.fromJson(json);

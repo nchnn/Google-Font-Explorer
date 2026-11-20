@@ -34,66 +34,72 @@ void main() {
       service.debugHttpClient = null;
     });
 
-    test('warm launch returns cached catalogue with isFromCache: true', () async {
-      final sampleCatalogueJson = json.encode({
-        'items': [
-          {
-            'family': 'WarmFont1',
-            'category': 'sans-serif',
-            'variants': ['regular'],
-            'files': {'regular': 'https://example.com/warm1.ttf'},
-          },
-          {
-            'family': 'WarmFont2',
-            'category': 'serif',
-            'variants': ['regular'],
-            'files': {'regular': 'https://example.com/warm2.ttf'},
-          },
-        ],
-      });
+    test(
+      'warm launch returns cached catalogue with isFromCache: true',
+      () async {
+        final sampleCatalogueJson = json.encode({
+          'items': [
+            {
+              'family': 'WarmFont1',
+              'category': 'sans-serif',
+              'variants': ['regular'],
+              'files': {'regular': 'https://example.com/warm1.ttf'},
+            },
+            {
+              'family': 'WarmFont2',
+              'category': 'serif',
+              'variants': ['regular'],
+              'files': {'regular': 'https://example.com/warm2.ttf'},
+            },
+          ],
+        });
 
-      await memoryStore.write(FontSortOrder.popularity, sampleCatalogueJson);
+        await memoryStore.write(FontSortOrder.popularity, sampleCatalogueJson);
 
-      final catalogue = await service.fetchCatalogue(
-        sort: FontSortOrder.popularity,
-        forceRefresh: false,
-      );
+        final catalogue = await service.fetchCatalogue(
+          sort: FontSortOrder.popularity,
+          forceRefresh: false,
+        );
 
-      expect(catalogue.isFromCache, isTrue);
-      expect(catalogue.entries.length, 2);
-      expect(catalogue.entries[0].name, 'WarmFont1');
-      expect(catalogue.entries[1].name, 'WarmFont2');
-    });
+        expect(catalogue.isFromCache, isTrue);
+        expect(catalogue.entries.length, 2);
+        expect(catalogue.entries[0].name, 'WarmFont1');
+        expect(catalogue.entries[1].name, 'WarmFont2');
+      },
+    );
 
-    test('prefetchPreviewBytes caches regular weight without FontLoader.load', () async {
-      var downloadCount = 0;
-      service.debugHttpClient = MockClient((request) async {
-        downloadCount++;
-        return http.Response.bytes(Uint8List.fromList([1, 2, 3]), 200);
-      });
+    test(
+      'prefetchPreviewBytes caches regular weight without FontLoader.load',
+      () async {
+        var downloadCount = 0;
+        service.debugHttpClient = MockClient((request) async {
+          downloadCount++;
+          return http.Response.bytes(Uint8List.fromList([1, 2, 3]), 200);
+        });
 
-      const font = FontModel(
-        name: 'PrefetchTestFont',
-        category: 'Sans Serif',
-        description: 'Test prefetch',
-        weights: [FontWeight.w400],
-        files: {'regular': 'https://example.com/prefetch.ttf'},
-      );
+        const font = FontModel(
+          name: 'PrefetchTestFont',
+          category: 'Sans Serif',
+          description: 'Test prefetch',
+          weights: [FontWeight.w400],
+          files: {'regular': 'https://example.com/prefetch.ttf'},
+        );
 
-      expect(service.isFontLoaded(font.name), isFalse);
-      expect(service.cachedFontFileCount, 0);
+        expect(service.isFontLoaded(font.name), isFalse);
+        expect(service.cachedFontFileCount, 0);
 
-      await service.prefetchPreviewBytes(font);
+        await service.prefetchPreviewBytes(font);
 
-      expect(downloadCount, 1);
-      expect(service.cachedFontFileCount, 1);
-      // Ensure FontLoader.load was NOT called
-      expect(service.isFontLoaded(font.name), isFalse);
+        expect(downloadCount, 1);
+        expect(service.cachedFontFileCount, 1);
+        // Ensure FontLoader.load was NOT called
+        expect(service.isFontLoaded(font.name), isFalse);
 
-      // Repeat prefetch is a cache hit and does not download again
-      await service.prefetchPreviewBytes(font);
-      expect(downloadCount, 1);
-    });
+        // Repeat prefetch is a cache hit and does not download again
+        await service.prefetchPreviewBytes(font);
+        expect(downloadCount, 1);
+      },
+    );
 
     test('ensureFontLoaded routes through FontLoader per-family when file URL exists', () async {
       service.debugHttpClient = MockClient((request) async {
@@ -162,7 +168,10 @@ void main() {
       expect(service.isFontLoaded(slowFont.name), isFalse);
 
       // Failing family does not block another successful family
-      expect(service.ensureFontLoaded(failFont.name), throwsA(isA<FontApiException>()));
+      expect(
+        service.ensureFontLoaded(failFont.name),
+        throwsA(isA<FontApiException>()),
+      );
 
       // Clean up slow future
       slowGate.complete(http.Response('abort', 404));
@@ -209,62 +218,67 @@ void main() {
   });
 
   group('Static Placeholder & UI Tests', () {
-    testWidgets('FontText waiting state renders static text without spinner or stack', (tester) async {
-      final entry = CatalogueEntry.fromJson({
-        'family': 'PendingSlowFont',
-        'category': 'sans-serif',
-        'variants': ['regular'],
-        'files': {'regular': 'https://example.com/slow.ttf'},
-      });
-      FontService.instance.registerEntries([entry]);
+    testWidgets(
+      'FontText waiting state renders static text without spinner or stack',
+      (tester) async {
+        final entry = CatalogueEntry.fromJson({
+          'family': 'PendingSlowFont',
+          'category': 'sans-serif',
+          'variants': ['regular'],
+          'files': {'regular': 'https://example.com/slow.ttf'},
+        });
+        FontService.instance.registerEntries([entry]);
 
-      final gate = Completer<http.Response>();
-      FontService.instance.debugHttpClient = MockClient((request) => gate.future);
+        final gate = Completer<http.Response>();
+        FontService.instance.debugHttpClient = MockClient(
+          (request) => gate.future,
+        );
 
-      addTearDown(() {
-        if (!gate.isCompleted) {
-          gate.complete(http.Response('abort', 404));
-        }
-        FontService.instance.clearCache();
-        FontService.instance.debugHttpClient = null;
-      });
+        addTearDown(() {
+          if (!gate.isCompleted) {
+            gate.complete(http.Response('abort', 404));
+          }
+          FontService.instance.clearCache();
+          FontService.instance.debugHttpClient = null;
+        });
 
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: FontText(
-              fontFamily: 'PendingSlowFont',
-              text: 'Preview Text',
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: FontText(
+                fontFamily: 'PendingSlowFont',
+                text: 'Preview Text',
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      // Verify that during waiting:
-      // 1. One Text widget is displayed with preview text
-      expect(find.text('Preview Text'), findsOneWidget);
+        // Verify that during waiting:
+        // 1. One Text widget is displayed with preview text
+        expect(find.text('Preview Text'), findsOneWidget);
 
-      // 2. No CircularProgressIndicator is built inside FontText
-      expect(
-        find.descendant(
-          of: find.byType(FontText),
-          matching: find.byType(CircularProgressIndicator),
-        ),
-        findsNothing,
-      );
+        // 2. No CircularProgressIndicator is built inside FontText
+        expect(
+          find.descendant(
+            of: find.byType(FontText),
+            matching: find.byType(CircularProgressIndicator),
+          ),
+          findsNothing,
+        );
 
-      // 3. No Stack with transparent duplicate is built inside FontText
-      expect(
-        find.descendant(
-          of: find.byType(FontText),
-          matching: find.byType(Stack),
-        ),
-        findsNothing,
-      );
+        // 3. No Stack with transparent duplicate is built inside FontText
+        expect(
+          find.descendant(
+            of: find.byType(FontText),
+            matching: find.byType(Stack),
+          ),
+          findsNothing,
+        );
 
-      // Finish the pending request and settle
-      gate.complete(http.Response('not found', 404));
-      await tester.pumpAndSettle();
-    });
+        // Finish the pending request and settle
+        gate.complete(http.Response('not found', 404));
+        await tester.pumpAndSettle();
+      },
+    );
   });
 }

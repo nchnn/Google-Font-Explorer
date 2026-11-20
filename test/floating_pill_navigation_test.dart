@@ -65,30 +65,29 @@ class _HarnessState extends State<_Harness> {
 }
 
 void main() {
-  testWidgets('renders a compact, centred capsule with all three destinations', (
-    tester,
-  ) async {
-    await tester.pumpWidget(const _Harness());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'renders a compact, centred capsule with all three destinations',
+    (tester) async {
+      await tester.pumpWidget(const _Harness());
+      await tester.pumpAndSettle();
 
-    final pill = find.byType(FloatingPillNavigation);
-    expect(pill, findsOneWidget);
+      final pill = find.byType(FloatingPillNavigation);
+      expect(pill, findsOneWidget);
 
-    final pillRect = tester.getRect(pill);
-    expect(pillRect.width, closeTo(_expectedPillWidth, 1));
-    expect(pillRect.width, lessThan(320));
-    expect(pillRect.center.dx, closeTo(400, 1));
+      final pillRect = tester.getRect(pill);
+      expect(pillRect.width, closeTo(_expectedPillWidth, 1));
+      expect(pillRect.width, lessThan(320));
+      expect(pillRect.center.dx, closeTo(400, 1));
 
-    // Active tab (Home) label is visible; inactive labels exist in tree
-    // but have zero opacity / zero width.
-    expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Explore'), findsOneWidget);
-    expect(find.text('Preview'), findsOneWidget);
-  });
+      // Active tab (Home) label is visible; inactive labels exist in tree
+      // but have zero opacity / zero width.
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('Explore'), findsOneWidget);
+      expect(find.text('Preview'), findsOneWidget);
+    },
+  );
 
-  testWidgets('active indicator slides smoothly between tabs', (
-    tester,
-  ) async {
+  testWidgets('active indicator slides smoothly between tabs', (tester) async {
     await tester.pumpWidget(const _Harness());
     await tester.pumpAndSettle();
 
