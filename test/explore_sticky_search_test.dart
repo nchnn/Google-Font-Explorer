@@ -4,15 +4,22 @@ import 'package:type_studio/app.dart';
 import 'package:type_studio/data/font_data.dart';
 import 'package:type_studio/screens/explore_screen.dart';
 
+// The home screen blob animation uses repeat(), preventing pumpAndSettle.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
 Future<void> _openExplore(WidgetTester tester) async {
   tester.view.physicalSize = const Size(1080, 1920);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(const TypeStudioApp());
-  await tester.pumpAndSettle();
+  await _settle(tester);
   await tester.tap(find.byIcon(Icons.grid_view_rounded).first);
-  await tester.pumpAndSettle();
+  await _settle(tester);
 }
 
 void main() {
@@ -31,13 +38,13 @@ void main() {
     // The bar only pins once the title above it has scrolled off, so measure
     // the "fixed" position from an already-scrolled state.
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -1200));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(hairlineColor(tester)!.a, 1.0,
         reason: 'the hairline must appear once the list has scrolled');
     final before = tester.getTopLeft(find.byKey(const Key('pinned-search')));
 
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -300));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     final after = tester.getTopLeft(find.byKey(const Key('pinned-search')));
     expect(after.dy, closeTo(before.dy, 1.0),
@@ -45,7 +52,7 @@ void main() {
 
     // Back at the top the content is once again flush with the bar.
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, 3000));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(hairlineColor(tester)!.a, 0.0,
         reason: 'the hairline must disappear again at the top of the list');
   });
@@ -55,7 +62,7 @@ void main() {
     expect(find.text('Explore fonts'), findsOneWidget);
 
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -1200));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.text('Explore fonts'), findsNothing,
         reason: 'the title must scroll away once the bar is pinned');
@@ -65,7 +72,7 @@ void main() {
     expect(tester.getRect(search).top, greaterThanOrEqualTo(0.0));
     await tester.enterText(search, 'Roboto');
     await tester.pump(const Duration(milliseconds: 350));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(find.textContaining('Showing 1 of 1'), findsOneWidget);
   });
 
@@ -85,10 +92,10 @@ void main() {
         ),
       ),
     ));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -600));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     final bar = tester.getRect(find.byKey(const Key('pinned-search')));
     // Font cards only: the error/offline banner is a Card too and must not be
@@ -143,7 +150,7 @@ void main() {
         reason: 'a fully visible card below the bar is needed for the tap-through control');
 
     await tester.tapAt(tester.getRect(find.byWidget(cardsBelowBar.first.widget)).center);
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(selections, 1,
         reason: 'a tap outside the bar must still reach its card, or the check above proves nothing');
   });
@@ -166,7 +173,7 @@ void main() {
         ),
       ),
     ));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(tester.takeException(), isNull);
     expect(find.byKey(const Key('pinned-search')), findsOneWidget);
     final bar = tester.getRect(find.byKey(const Key('pinned-search')));

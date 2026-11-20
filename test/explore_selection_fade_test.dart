@@ -7,6 +7,13 @@ import 'package:type_studio/services/font_service.dart';
 import 'package:type_studio/widgets/fade_in_batch.dart';
 import 'package:type_studio/widgets/font_text.dart';
 
+// The home screen blob animation uses repeat(), preventing pumpAndSettle.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
 Future<void> _openExplore(
   WidgetTester tester, {
   Size size = const Size(1080, 1200),
@@ -16,9 +23,9 @@ Future<void> _openExplore(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(const TypeStudioApp());
-  await tester.pumpAndSettle();
+  await _settle(tester);
   await tester.tap(find.byIcon(Icons.grid_view_rounded).first);
-  await tester.pumpAndSettle();
+  await _settle(tester);
 }
 
 Future<void> _pumpFadeInBatch(
@@ -79,13 +86,13 @@ void main() {
 
     await tester.enterText(find.byType(TextField).first, 'Lato');
     await tester.pump(const Duration(milliseconds: 350));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(find.byIcon(Icons.check_circle_rounded), findsNothing,
         reason: 'Lato is shown, Roboto is filtered out, but the selection is kept');
 
     await tester.enterText(find.byType(TextField).first, '');
     await tester.pump(const Duration(milliseconds: 350));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget,
         reason: 'clearing the search restores Roboto and its selected state');
   });
@@ -96,14 +103,14 @@ void main() {
     final serif = find.widgetWithText(FilterChip, 'Serif');
     await tester.ensureVisible(serif);
     await tester.tap(serif);
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(find.byIcon(Icons.check_circle_rounded), findsNothing,
         reason: 'Roboto is not a serif, so the selection has no visible card');
 
     final all = find.widgetWithText(FilterChip, 'All');
     await tester.ensureVisible(all);
     await tester.tap(all);
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
   });
 
@@ -198,7 +205,7 @@ void main() {
       ),
     ));
     // An unstable future re-subscribes on every build and never settles.
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(find.text('preview'), findsOneWidget);
     for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 16));
@@ -228,7 +235,7 @@ void main() {
         },
       ),
     ));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(font.fileUrlLookups, 1, reason: 'the first build starts one load');
 
     for (var i = 0; i < 5; i++) {

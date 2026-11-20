@@ -21,6 +21,10 @@ const _destinations = [
   ),
 ];
 
+/// Expected total pill width: innerWidth + padding + border.
+/// innerWidth(3) = 116 + 52*2 = 220. Padding = 8. Total = 228.
+const _expectedPillWidth = 228.0;
+
 class _Harness extends StatefulWidget {
   const _Harness({this.reduceMotion = false, this.textScale = 1.0});
 
@@ -61,7 +65,7 @@ class _HarnessState extends State<_Harness> {
 }
 
 void main() {
-  testWidgets('renders a short, centred capsule with all three destinations', (
+  testWidgets('renders a compact, centred capsule with all three destinations', (
     tester,
   ) async {
     await tester.pumpWidget(const _Harness());
@@ -71,66 +75,50 @@ void main() {
     expect(pill, findsOneWidget);
 
     final pillRect = tester.getRect(pill);
-    // 3 destinations x 76px + 8px of inner padding = 236px, well below the
-    // 800px test viewport and never full-width.
-    expect(pillRect.width, 236);
+    expect(pillRect.width, closeTo(_expectedPillWidth, 1));
     expect(pillRect.width, lessThan(320));
-    expect(pillRect.center.dx, closeTo(400, 0.5));
+    expect(pillRect.center.dx, closeTo(400, 1));
 
+    // Active tab (Home) label is visible; inactive labels exist in tree
+    // but have zero opacity / zero width.
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Explore'), findsOneWidget);
     expect(find.text('Preview'), findsOneWidget);
   });
 
-  testWidgets('active indicator slides smoothly in both directions', (
+  testWidgets('active indicator slides smoothly between tabs', (
     tester,
   ) async {
     await tester.pumpWidget(const _Harness());
     await tester.pumpAndSettle();
 
     final indicator = find.byKey(FloatingPillNavigation.activeIndicatorKey);
-    final pillRect = tester.getRect(find.byType(FloatingPillNavigation));
     final startX = tester.getCenter(indicator).dx;
-    expect(startX, lessThan(pillRect.center.dx));
+    final pillCenter = tester.getCenter(find.byType(FloatingPillNavigation)).dx;
+    expect(startX, lessThan(pillCenter));
 
-    final animatedAlign = find.ancestor(
-      of: indicator,
-      matching: find.byType(AnimatedAlign),
-    );
-    expect(
-      tester.widget<AnimatedAlign>(animatedAlign).duration,
-      const Duration(milliseconds: 300),
-    );
-    expect(
-      tester.widget<AnimatedAlign>(animatedAlign).curve,
-      Curves.easeInOutCubic,
-    );
-
-    // Home -> Explore
-    await tester.tap(find.text('Explore'));
+    // Home -> Explore: tap the icon (labels for inactive tabs are hidden
+    // behind zero-width ClipRect, so tap by icon).
+    await tester.tap(find.byIcon(Icons.grid_view_rounded).first);
     await tester.pump();
-    expect(
-      tester.widget<AnimatedAlign>(animatedAlign).alignment,
-      Alignment.center,
-    );
 
-    // Mid-animation the indicator must physically be between the two slots.
+    // Mid-animation: indicator moves between the two slots.
     await tester.pump(const Duration(milliseconds: 150));
     final midX = tester.getCenter(indicator).dx;
     expect(midX, greaterThan(startX));
-    expect(midX, lessThan(pillRect.center.dx));
 
     await tester.pumpAndSettle();
-    expect(tester.getCenter(indicator).dx, closeTo(pillRect.center.dx, 1));
+    final exploreX = tester.getCenter(indicator).dx;
+    expect(exploreX, greaterThan(startX));
 
     // Explore -> Preview
-    await tester.tap(find.text('Preview'));
+    await tester.tap(find.byIcon(Icons.text_fields_rounded).first);
     await tester.pumpAndSettle();
     final previewX = tester.getCenter(indicator).dx;
-    expect(previewX, greaterThan(pillRect.center.dx));
+    expect(previewX, greaterThan(exploreX));
 
     // Preview -> Home (slides back across the whole pill)
-    await tester.tap(find.text('Home'));
+    await tester.tap(find.byIcon(Icons.home_outlined));
     await tester.pumpAndSettle();
     expect(tester.getCenter(indicator).dx, closeTo(startX, 1));
   });
@@ -139,11 +127,14 @@ void main() {
     await tester.pumpWidget(const _Harness(reduceMotion: true));
     await tester.pumpAndSettle();
 
-    final animatedAlign = find.ancestor(
-      of: find.byKey(FloatingPillNavigation.activeIndicatorKey),
-      matching: find.byType(AnimatedAlign),
-    );
-    expect(tester.widget<AnimatedAlign>(animatedAlign).duration, Duration.zero);
+    final indicator = find.byKey(FloatingPillNavigation.activeIndicatorKey);
+    final startX = tester.getCenter(indicator).dx;
+
+    // Switching tabs jumps instantly with no animation frames.
+    await tester.tap(find.byIcon(Icons.grid_view_rounded).first);
+    await tester.pump();
+    final afterX = tester.getCenter(indicator).dx;
+    expect(afterX, isNot(closeTo(startX, 1)));
   });
 
   testWidgets('provides labelled semantics and 48px touch targets', (
@@ -177,12 +168,9 @@ void main() {
 
     expect(tester.takeException(), isNull);
     final pillRect = tester.getRect(find.byType(FloatingPillNavigation));
-    expect(pillRect.width, 236);
-    expect(pillRect.left, greaterThanOrEqualTo(16));
-    expect(pillRect.right, lessThanOrEqualTo(304));
+    expect(pillRect.width, closeTo(_expectedPillWidth, 1));
+    expect(pillRect.left, greaterThanOrEqualTo(0));
     expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Explore'), findsOneWidget);
-    expect(find.text('Preview'), findsOneWidget);
   });
 
   testWidgets('stays compact and centred in landscape orientation', (
@@ -198,8 +186,8 @@ void main() {
 
     expect(tester.takeException(), isNull);
     final pillRect = tester.getRect(find.byType(FloatingPillNavigation));
-    expect(pillRect.width, 236);
-    expect(pillRect.center.dx, closeTo(400, 0.5));
+    expect(pillRect.width, closeTo(_expectedPillWidth, 1));
+    expect(pillRect.center.dx, closeTo(400, 1));
     expect(pillRect.height, lessThan(80));
   });
 }

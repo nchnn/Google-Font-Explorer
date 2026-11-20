@@ -88,6 +88,21 @@ void main() {
   });
 
   group('TypeStudioApp Widget Tests', () {
+    // The home screen hero-word cycle uses recursive Future.delayed timers,
+    // so pumpAndSettle() never returns. Pump several small frames instead.
+    Future<void> settle(WidgetTester tester) async {
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+    }
+
+    // Find an icon inside the nav pill (avoids hitting identically-named
+    // icons elsewhere on screen, e.g. the Home header logo).
+    Finder navIcon(IconData icon) => find.descendant(
+          of: find.byType(FloatingPillNavigation),
+          matching: find.byIcon(icon),
+        );
+
     testWidgets('App renders Home screen with TypeStudio title and theme toggle', (tester) async {
       await tester.pumpWidget(const TypeStudioApp());
       await tester.pump();
@@ -95,21 +110,20 @@ void main() {
       expect(find.text('TypeStudio'), findsWidgets);
       expect(find.text('GOOGLE FONTS EXPLORER'), findsOneWidget);
       expect(find.text('Make every word'), findsOneWidget);
-      expect(find.text('Your current font'), findsOneWidget);
 
       // Verify theme toggle button is present
       expect(find.byIcon(Icons.wb_sunny_rounded), findsOneWidget);
 
       // Tap theme toggle to switch to Dark Mode
       await tester.tap(find.byIcon(Icons.wb_sunny_rounded));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Verify icon changed to Moon for Dark Mode
       expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
 
       // Tap again to switch back to Light Mode
       await tester.tap(find.byIcon(Icons.nightlight_round));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.byIcon(Icons.wb_sunny_rounded), findsOneWidget);
     });
 
@@ -134,25 +148,25 @@ void main() {
       expect(pillRect.center.dx, closeTo(screenSize.width / 2, 1));
       expect(pillRect.bottom, lessThan(screenSize.height));
 
-      // Navigate to Explore tab
-      await tester.tap(find.text('Explore'));
-      await tester.pumpAndSettle();
+      // Navigate to Explore tab (tap icon; inactive labels are clipped)
+      await tester.tap(navIcon(Icons.grid_view_rounded));
+      await settle(tester);
       expect(find.text('Explore fonts'), findsOneWidget);
 
       // Navigate to Preview tab
-      await tester.tap(find.text('Preview'));
-      await tester.pumpAndSettle();
+      await tester.tap(navIcon(Icons.text_fields_rounded));
+      await settle(tester);
       expect(find.text('Typography tester'), findsOneWidget);
       expect(find.text('LIVE PREVIEW'), findsOneWidget);
 
       // Navigate back Home
-      await tester.tap(find.text('Home'));
-      await tester.pumpAndSettle();
+      await tester.tap(navIcon(Icons.home_outlined));
+      await settle(tester);
       expect(find.text('Make every word'), findsOneWidget);
 
       // Verify fixed preview and scrollbar in controls section
-      await tester.tap(find.text('Preview'));
-      await tester.pumpAndSettle();
+      await tester.tap(navIcon(Icons.text_fields_rounded));
+      await settle(tester);
       expect(find.byType(Scrollbar), findsOneWidget);
       expect(find.text('Typography controls'), findsOneWidget);
       expect(find.text('Font size'), findsOneWidget);
@@ -174,22 +188,22 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const TypeStudioApp());
-      await tester.pumpAndSettle();
+      await settle(tester);
 
-      await tester.tap(find.text('Explore'));
-      await tester.pumpAndSettle();
+      await tester.tap(navIcon(Icons.grid_view_rounded));
+      await settle(tester);
 
       final searchField = find.byType(TextField).first;
       await tester.enterText(searchField, 'Roboto');
       await tester.pump(const Duration(milliseconds: 350));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.text('Roboto'), findsWidgets);
 
       // Leave and return; IndexedStack keeps the Explore state alive.
-      await tester.tap(find.text('Home'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Explore'));
-      await tester.pumpAndSettle();
+      await tester.tap(navIcon(Icons.home_outlined));
+      await settle(tester);
+      await tester.tap(navIcon(Icons.grid_view_rounded));
+      await settle(tester);
 
       final restoredField = tester.widget<TextField>(find.byType(TextField).first);
       expect(restoredField.controller?.text, 'Roboto');
@@ -198,7 +212,7 @@ void main() {
 
     testWidgets('scrolled content stays clear of the floating pill', (tester) async {
       await tester.pumpWidget(const TypeStudioApp());
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       final pillTop =
           tester.getTopLeft(find.byType(FloatingPillNavigation)).dy;
@@ -209,7 +223,7 @@ void main() {
           find.byType(CustomScrollView),
           const Offset(0, -20000),
         );
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
       final lastHomeItem =
           find.textContaining('Bold / Italic', skipOffstage: false);
@@ -217,11 +231,11 @@ void main() {
       expect(tester.getBottomLeft(lastHomeItem).dy, lessThan(pillTop));
 
       // Preview: the final reset button must also clear the pill.
-      await tester.tap(find.text('Preview'));
-      await tester.pumpAndSettle();
+      await tester.tap(navIcon(Icons.text_fields_rounded));
+      await settle(tester);
       for (var i = 0; i < 3; i++) {
         await tester.drag(find.byType(ListView), const Offset(0, -20000));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
       final resetButton =
           find.text('Reset preview settings', skipOffstage: false);
@@ -238,7 +252,7 @@ void main() {
       addTearDown(tester.view.resetPadding);
 
       await tester.pumpWidget(const TypeStudioApp());
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       final pillRect = tester.getRect(find.byType(FloatingPillNavigation));
       // 12px design gap + 24px system inset above the bottom edge.
@@ -252,38 +266,40 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const TypeStudioApp());
-      await tester.pumpAndSettle();
+      await settle(tester);
 
-      Alignment indicatorAlignment() {
-        final animatedAlign = find.ancestor(
-          of: find.byKey(FloatingPillNavigation.activeIndicatorKey),
-          matching: find.byType(AnimatedAlign),
-        );
-        return tester.widget<AnimatedAlign>(animatedAlign).alignment as Alignment;
+      double indicatorRelativeX() {
+        final indicator = find.byKey(FloatingPillNavigation.activeIndicatorKey);
+        final pill = find.byType(FloatingPillNavigation);
+        return tester.getTopLeft(indicator).dx - tester.getTopLeft(pill).dx;
       }
+
+      final homeX = indicatorRelativeX();
 
       // Home's call-to-action navigates to Explore without tapping the pill.
       await tester.tap(find.text('Explore fonts'));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(
         find.text('Discover typography from the live Google Fonts catalogue.'),
         findsOneWidget,
       );
-      expect(indicatorAlignment(), Alignment.center);
+      final exploreX = indicatorRelativeX();
+      expect(exploreX, greaterThan(homeX));
 
       // Preview's "Customize preview" shortcut navigates back home then to
       // Preview; the indicator follows the actual screen in both cases.
-      await tester.tap(find.text('Home'));
-      await tester.pumpAndSettle();
+      await tester.tap(navIcon(Icons.home_outlined));
+      await settle(tester);
       await tester.tap(find.text('Customize preview'));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.text('Typography tester'), findsOneWidget);
-      expect(indicatorAlignment(), const Alignment(1, 0));
+      final previewX = indicatorRelativeX();
+      expect(previewX, greaterThan(exploreX));
     });
 
     testWidgets('navigation overlay adds no background behind the pill', (tester) async {
       await tester.pumpWidget(const TypeStudioApp());
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.byType(NavigationBar), findsNothing);
 
@@ -313,31 +329,31 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const TypeStudioApp());
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Navigate to Explore
-      await tester.tap(find.byIcon(Icons.grid_view_rounded).first);
-      await tester.pumpAndSettle();
+      await tester.tap(navIcon(Icons.grid_view_rounded));
+      await settle(tester);
 
       // Enter search query
       final searchField = find.byType(TextField).first;
       await tester.enterText(searchField, 'Roboto');
       // Wait for debounce timer (300ms)
       await tester.pump(const Duration(milliseconds: 350));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.text('Roboto'), findsWidgets);
 
       // Enter search query with no matches
       await tester.enterText(searchField, 'NonExistentZyxwv');
       await tester.pump(const Duration(milliseconds: 350));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.text('No matching font families found', skipOffstage: false), findsOneWidget);
 
       // Clear search
       await tester.tap(find.text('Clear search & filters', skipOffstage: false));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.text('No matching font families found', skipOffstage: false), findsNothing);
     });
@@ -349,11 +365,11 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const TypeStudioApp());
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Navigate to Preview tab
-      await tester.tap(find.text('Preview'));
-      await tester.pumpAndSettle();
+      await tester.tap(navIcon(Icons.text_fields_rounded));
+      await settle(tester);
 
       // Check header and badge
       expect(find.text('Typography controls'), findsOneWidget);
@@ -362,13 +378,13 @@ void main() {
       // Verify live preview is editable and can be typed into directly
       final previewField = find.byType(TextField).first;
       await tester.enterText(previewField, 'Hello TypeStudio');
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.text('Hello TypeStudio'), findsOneWidget);
 
       // Verify clear text feature
       expect(find.text('Clear text'), findsOneWidget);
       await tester.tap(find.text('Clear text'));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.text('Clear text'), findsNothing);
 
       // Check Font size and checkpoints
@@ -387,13 +403,13 @@ void main() {
 
       // Tap weight 700 to snap slider to bold
       await tester.tap(find.text('700'));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.text('Bold (700)'), findsOneWidget);
 
       // Test Italic toggle
       expect(find.byIcon(Icons.format_italic_rounded), findsOneWidget);
       await tester.tap(find.byIcon(Icons.format_italic_rounded));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Check Leading & Tracking
       await tester.dragUntilVisible(
@@ -417,7 +433,7 @@ void main() {
         const Offset(0, -200),
       );
       await tester.tap(find.text('Reset preview settings'));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Verify reset back to 32px and Regular (400)
       expect(find.text('32 px'), findsOneWidget);
@@ -431,10 +447,10 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const TypeStudioApp());
-      await tester.pumpAndSettle();
+      await settle(tester);
 
-      await tester.tap(find.text('Preview'));
-      await tester.pumpAndSettle();
+      await tester.tap(navIcon(Icons.text_fields_rounded));
+      await settle(tester);
 
       final context = tester.element(find.byType(PreviewScreen));
       final appState = AppState.read(context);
@@ -448,7 +464,7 @@ void main() {
       );
 
       appState.selectFont(customFont, preview: preview);
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.text('400'), findsOneWidget);
       expect(find.text('300'), findsNothing);

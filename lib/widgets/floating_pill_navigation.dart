@@ -1,3 +1,5 @@
+import 'dart:ui' show lerpDouble;
+
 import 'package:material_ui/material_ui.dart';
 
 import '../theme/app_colors.dart';
@@ -5,6 +7,12 @@ import '../theme/app_colors.dart';
 /// Extra space that scrollable screens should reserve at the bottom so the
 /// floating navigation pill never covers their last cards or controls.
 const double kFloatingPillNavigationClearance = 96;
+
+/// Width of an inactive destination (icon only).
+const double _kInactiveWidth = 52.0;
+
+/// Width of the active destination (icon + label).
+const double _kActiveWidth = 116.0;
 
 /// A single destination shown inside [FloatingPillNavigation].
 class FloatingPillDestination {
@@ -20,33 +28,27 @@ class FloatingPillDestination {
   /// Icon shown while the destination is selected.
   final IconData selectedIcon;
 
-  /// Short label displayed below the icon.
+  /// Short label shown beside the icon when the destination is active.
   final String label;
 }
 
-/// A compact, capsule-shaped bottom navigation bar with a single active
-/// indicator that slides horizontally between destinations.
-///
-/// The widget intentionally sizes itself to its content instead of filling the
-/// available width, keeping the navigation short and floating.
-class FloatingPillNavigation extends StatelessWidget {
+/// A compact, capsule-shaped bottom navigation bar whose active destination
+/// expands into a pill showing icon + label while inactive destinations
+/// collapse to icon-only. The active pill slides and snaps between positions
+/// with a spring-like animation.
+class FloatingPillNavigation extends StatefulWidget {
   const FloatingPillNavigation({
     super.key,
     required this.selectedIndex,
     required this.onDestinationSelected,
     required this.destinations,
-    this.animationDuration = const Duration(milliseconds: 300),
+    this.animationDuration = const Duration(milliseconds: 350),
     this.backgroundColor,
     this.activeIndicatorColor,
     this.activeForegroundColor,
     this.inactiveForegroundColor,
-    this.itemWidth = 76,
-    this.height = 60,
+    this.height = 56,
   }) : assert(destinations.length > 0, 'At least one destination is required.'),
-       assert(
-         itemWidth >= 48,
-         'Destinations must be at least 48 logical pixels wide.',
-       ),
        assert(
          height >= 48,
          'Touch targets must be at least 48 logical pixels high.',
@@ -79,49 +81,104 @@ class FloatingPillNavigation extends StatelessWidget {
   /// Optional override for unselected icon and label colours.
   final Color? inactiveForegroundColor;
 
-  /// Width reserved for each destination. Must be at least 48 logical pixels.
-  final double itemWidth;
-
   /// Overall pill height. Must be at least 48 logical pixels.
   final double height;
+
+  /// Total inner width for a given destination count.
+  static double innerWidth(int destinationCount) =>
+      _kActiveWidth + _kInactiveWidth * (destinationCount - 1);
+
+  @override
+  State<FloatingPillNavigation> createState() => _FloatingPillNavigationState();
+}
+
+class _FloatingPillNavigationState extends State<FloatingPillNavigation>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late int _previousIndex;
+  late int _currentIndex;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.selectedIndex.clamp(
+      0,
+      widget.destinations.length - 1,
+    );
+    _previousIndex = _currentIndex;
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.animationDuration,
+    );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+    _controller.value = 1.0; // start settled
+  }
+
+  @override
+  void didUpdateWidget(FloatingPillNavigation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newIndex = widget.selectedIndex.clamp(
+      0,
+      widget.destinations.length - 1,
+    );
+    if (newIndex != _currentIndex) {
+      _previousIndex = _currentIndex;
+      _currentIndex = newIndex;
+
+      final animationsDisabled =
+          MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+      if (animationsDisabled) {
+        _controller.value = 1.0;
+      } else {
+        _controller.duration = widget.animationDuration;
+        _controller.forward(from: 0.0);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Compute the left offset of the indicator for a given active tab index.
+  double _indicatorLeft(int activeIndex) {
+    double left = 0;
+    for (int i = 0; i < activeIndex; i++) {
+      left += _kInactiveWidth;
+    }
+    return left;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final background =
-        backgroundColor ?? (isDark ? AppColors.darkSurface : AppColors.surface);
-    final indicatorColour =
-        activeIndicatorColor ??
+    final background = widget.backgroundColor ??
+        (isDark ? AppColors.darkSurface : AppColors.surface);
+    final indicatorColour = widget.activeIndicatorColor ??
         (isDark ? AppColors.darkSecondarySurface : const Color(0xFFE9E9E9));
-    final activeColour =
-        activeForegroundColor ??
+    final activeColour = widget.activeForegroundColor ??
         (isDark ? AppColors.darkPrimaryText : AppColors.charcoal);
-    final inactiveColour =
-        inactiveForegroundColor ??
+    final inactiveColour = widget.inactiveForegroundColor ??
         (isDark ? AppColors.darkSecondaryText : AppColors.secondaryText);
     final borderColour = isDark ? AppColors.darkBorder : AppColors.border;
 
-    // Respect the platform's reduce-motion accessibility setting.
-    final animationsDisabled =
-        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    final effectiveDuration = animationsDisabled
-        ? Duration.zero
-        : animationDuration;
-
-    final activeIndex = selectedIndex.clamp(0, destinations.length - 1);
-    final activeAlignment = destinations.length == 1
-        ? Alignment.center
-        : Alignment(-1 + (2 * activeIndex) / (destinations.length - 1), 0);
-
-    final innerWidth = itemWidth * destinations.length;
-    final innerHeight = height - 8; // 4 logical pixels of padding on each side.
+    final innerHeight = widget.height - 8;
+    final innerWidth = FloatingPillNavigation.innerWidth(
+      widget.destinations.length,
+    );
 
     return DecoratedBox(
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(height / 2),
+        borderRadius: BorderRadius.circular(widget.height / 2),
         border: Border.all(color: borderColour),
         boxShadow: [
           BoxShadow(
@@ -133,10 +190,7 @@ class FloatingPillNavigation extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(height / 2),
-        // A transparency-only Material scopes ink feedback to the pill. It
-        // paints no background of its own, so the capsule's rounded colour and
-        // shadow above remain the only visible navigation surface.
+        borderRadius: BorderRadius.circular(widget.height / 2),
         child: Material(
           type: MaterialType.transparency,
           child: Padding(
@@ -144,20 +198,27 @@ class FloatingPillNavigation extends StatelessWidget {
             child: SizedBox(
               width: innerWidth,
               height: innerHeight,
-              child: Stack(
-                children: [
-                  // The single sliding active indicator. Only this inner element
-                  // moves; the navigation container itself stays stationary.
-                  Positioned.fill(
-                    child: AnimatedAlign(
-                      alignment: activeAlignment,
-                      duration: effectiveDuration,
-                      curve: Curves.easeInOutCubic,
-                      child: FractionallySizedBox(
-                        widthFactor: 1 / destinations.length,
-                        heightFactor: 1,
+              child: AnimatedBuilder(
+                animation: _animation,
+                builder: (context, _) {
+                  final t = _animation.value;
+
+                  // Interpolate indicator position.
+                  final fromLeft = _indicatorLeft(_previousIndex);
+                  final toLeft = _indicatorLeft(_currentIndex);
+                  final indicatorLeft = lerpDouble(fromLeft, toLeft, t)!;
+                  const indicatorWidth = _kActiveWidth;
+
+                  return Stack(
+                    children: [
+                      // Sliding active indicator
+                      Positioned(
+                        left: indicatorLeft,
+                        top: 0,
+                        bottom: 0,
+                        width: indicatorWidth,
                         child: DecoratedBox(
-                          key: activeIndicatorKey,
+                          key: FloatingPillNavigation.activeIndicatorKey,
                           decoration: BoxDecoration(
                             color: indicatorColour,
                             borderRadius: BorderRadius.circular(
@@ -166,24 +227,24 @@ class FloatingPillNavigation extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (var index = 0; index < destinations.length; index++)
-                        _PillDestinationButton(
-                          destination: destinations[index],
-                          selected: index == activeIndex,
-                          width: itemWidth,
-                          activeColour: activeColour,
-                          inactiveColour: inactiveColour,
-                          animationDuration: effectiveDuration,
-                          onTap: () => onDestinationSelected(index),
-                        ),
+                      // Destination buttons
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (var i = 0; i < widget.destinations.length; i++)
+                            _PillDestinationButton(
+                              destination: widget.destinations[i],
+                              selected: i == _currentIndex,
+                              activeColour: activeColour,
+                              inactiveColour: inactiveColour,
+                              progress: _buttonProgress(i, t),
+                              onTap: () => widget.onDestinationSelected(i),
+                            ),
+                        ],
+                      ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ),
@@ -191,30 +252,41 @@ class FloatingPillNavigation extends StatelessWidget {
       ),
     );
   }
+
+  /// Returns 0..1 for how "active" button [index] is right now.
+  /// 1 = fully expanded (icon + label), 0 = fully collapsed (icon only).
+  double _buttonProgress(int index, double t) {
+    if (index == _currentIndex && index == _previousIndex) return 1.0;
+    if (index == _currentIndex) return t;
+    if (index == _previousIndex) return 1.0 - t;
+    return 0.0;
+  }
 }
 
 class _PillDestinationButton extends StatelessWidget {
   const _PillDestinationButton({
     required this.destination,
     required this.selected,
-    required this.width,
     required this.activeColour,
     required this.inactiveColour,
-    required this.animationDuration,
+    required this.progress,
     required this.onTap,
   });
 
   final FloatingPillDestination destination;
   final bool selected;
-  final double width;
   final Color activeColour;
   final Color inactiveColour;
-  final Duration animationDuration;
+
+  /// 0 = fully inactive (icon only), 1 = fully active (icon + label).
+  final double progress;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? activeColour : inactiveColour;
+    final foreground = Color.lerp(inactiveColour, activeColour, progress)!;
+    final width = lerpDouble(_kInactiveWidth, _kActiveWidth, progress)!;
+    final labelOpacity = progress.clamp(0.0, 1.0);
 
     return Semantics(
       button: true,
@@ -233,7 +305,7 @@ class _PillDestinationButton extends StatelessWidget {
           height: double.infinity,
           child: MediaQuery.withClampedTextScaling(
             maxScaleFactor: 1.25,
-            child: Column(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -242,21 +314,28 @@ class _PillDestinationButton extends StatelessWidget {
                   size: 21,
                   color: foreground,
                 ),
-                const SizedBox(height: 3),
-                AnimatedDefaultTextStyle(
-                  duration: animationDuration,
-                  curve: Curves.easeInOutCubic,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    height: 1.1,
-                    letterSpacing: 0.1,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: foreground,
-                  ),
-                  child: Text(
-                    destination.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                // Animated label: width + opacity transition
+                ClipRect(
+                  child: SizedBox(
+                    width: lerpDouble(0, 60, labelOpacity),
+                    child: Opacity(
+                      opacity: labelOpacity,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Text(
+                          destination.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.1,
+                            letterSpacing: 0.2,
+                            fontWeight: FontWeight.w600,
+                            color: foreground,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],

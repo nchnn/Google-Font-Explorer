@@ -14,9 +14,16 @@ Future<void> _openExplore(WidgetTester tester) async {
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(const TypeStudioApp());
-  await tester.pumpAndSettle();
+  await _settle(tester);
   await tester.tap(find.byIcon(Icons.grid_view_rounded).first);
-  await tester.pumpAndSettle();
+  await _settle(tester);
+}
+
+// The home screen blob animation uses repeat(), preventing pumpAndSettle.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
 }
 
 double _opacity(WidgetTester tester) =>
@@ -66,7 +73,7 @@ void main() {
         ),
       ),
     ));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -600));
     await tester.pump(const Duration(seconds: 1));
@@ -76,7 +83,7 @@ void main() {
     final position = tester.state<ScrollableState>(find.byType(Scrollable).first).position;
     final offsetBefore = position.pixels;
     await tester.tapAt(tester.getCenter(find.byKey(const Key('scroll-top-button'))));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(position.pixels, offsetBefore,
         reason: 'a faded button must not swallow the tap and scroll to the top');
   });
@@ -89,7 +96,10 @@ void main() {
     expect(position.pixels, greaterThan(0));
 
     await tester.tap(find.byKey(const Key('scroll-top-button')));
-    await tester.pumpAndSettle();
+    // Scroll-to-top animation needs more frames than the standard settle.
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
     expect(position.pixels, 0);
   });
 
@@ -98,7 +108,7 @@ void main() {
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -600));
     await tester.pump();
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(tester.takeException(), isNull);
   });
 
@@ -122,7 +132,7 @@ void main() {
         ),
       ),
     ));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -600));
     await tester.pump(const Duration(milliseconds: 250));

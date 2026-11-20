@@ -81,15 +81,22 @@ class _GatedCatalogueClient extends http.BaseClient {
   }
 }
 
+// The home screen blob animation uses repeat(), preventing pumpAndSettle.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
 Future<void> _openExplore(WidgetTester tester, {Size size = const Size(1080, 1920)}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(const TypeStudioApp());
-  await tester.pumpAndSettle();
+  await _settle(tester);
   await tester.tap(find.byIcon(Icons.grid_view_rounded).first);
-  await tester.pumpAndSettle();
+  await _settle(tester);
 }
 
 /// Mounts the Explore screen directly against a test paginator.
@@ -111,7 +118,7 @@ Future<void> _mountExplore(
       ),
     ),
   ));
-  await tester.pumpAndSettle();
+  await _settle(tester);
 }
 
 int _listItemCount(WidgetTester tester) {
@@ -145,7 +152,7 @@ void main() {
         reason: 'the drag must start a batch on the screen, not just in the paginator');
 
     paginator.complete();
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(_listItemCount(tester), 10);
     expect(
@@ -166,12 +173,12 @@ void main() {
     // field stays reachable (pin-independent) while more than one batch is up.
     await _openExplore(tester, size: const Size(1400, 3000));
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -3000));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(_listItemCount(tester), greaterThan(5));
 
     await tester.enterText(find.byType(TextField).first, 'Roboto');
     await tester.pump(const Duration(milliseconds: 350));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.textContaining('Showing 1 of 1'), findsOneWidget);
     expect(_listItemCount(tester), 1);
@@ -183,12 +190,12 @@ void main() {
     await _openExplore(tester, size: const Size(1080, 1000));
     await tester.enterText(find.byType(TextField).first, 'Roboto');
     await tester.pump(const Duration(milliseconds: 350));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(_listItemCount(tester), 1);
 
     await tester.enterText(find.byType(TextField).first, '');
     await tester.pump(const Duration(milliseconds: 350));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(_listItemCount(tester), 5);
   });
 
@@ -200,7 +207,7 @@ void main() {
     // 'a' matches all twelve bundled families (names or categories).
     await tester.enterText(find.byType(TextField).first, 'a');
     await tester.pump(const Duration(milliseconds: 350));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(_listItemCount(tester), greaterThan(5),
         reason: 'a reset must refill a viewport too short to generate a scroll event');
@@ -216,11 +223,11 @@ void main() {
   testWidgets('the cursor stops at the end of the catalogue', (tester) async {
     await _openExplore(tester);
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -6000));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     // Appending never auto-scrolls, so the freshly loaded last batch leaves
     // the footer below the fold; one more scroll brings it into view.
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -6000));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(_listItemCount(tester), 12);
     expect(find.textContaining('All 12 font families'), findsOneWidget);
 
@@ -228,7 +235,7 @@ void main() {
     // a pinned row, so it has scrolled away by the bottom of the catalogue.
     // Scroll back up to read it.
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, 6000));
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(find.textContaining('Showing 12 of 12'), findsOneWidget);
   });
 
@@ -238,7 +245,7 @@ void main() {
 
     final before = _listItemCount(tester);
     await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -3000));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.text('Retry'), findsOneWidget);
     expect(_listItemCount(tester), before, reason: 'a failed batch must not advance the cursor');
@@ -267,7 +274,7 @@ void main() {
 
     // The suspended batch now fails against a result set it no longer owns.
     paginator.complete();
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.textContaining('Showing 1 of 1'), findsOneWidget);
     expect(_listItemCount(tester), 1,
@@ -288,7 +295,7 @@ void main() {
     await tester.pump();
     expect(find.text('Loading more fonts...'), findsOneWidget);
     paginator.complete();
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(_listItemCount(tester), 10);
 
     // This batch will outlive its result set.
@@ -362,7 +369,7 @@ void main() {
     await _openExplore(tester);
     for (var i = 0; i < 4; i++) {
       await tester.drag(find.byKey(const Key('explore-scroll')), const Offset(0, -6000));
-      await tester.pumpAndSettle();
+      await _settle(tester);
     }
     final cards = find.descendant(
       of: find.byKey(const Key('font-list')),
