@@ -1,5 +1,5 @@
 name: type_studio
-description: A Google Fonts Explorer Flutter application for Activity 5.
+description: A Google Fonts Explorer Flutter.
 publish_to: "none"
 version: 1.0.0+1
 
@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_svg: ^2.0.17
   google_fonts: ^9.0.0
   http: ^1.2.0
   material_ui: any
@@ -20,3 +21,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - web/icons/logo.svg
+    - web/icons/logo_light.svg
+    - web/icons/logo_dark.svg

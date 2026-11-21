@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../data/font_data.dart';
@@ -173,36 +174,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildHeader(AppState appState, ThemeData theme, bool isDark) {
     return Row(
       children: [
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [AppColors.darkSecondarySurface, AppColors.darkBackground]
-                  : [AppColors.charcoal, AppColors.darkGray],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.border,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark
-                    ? AppColors.shadowAmbientDark
-                    : AppColors.shadowAmbientLight,
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.text_fields_rounded,
-            color: Colors.white,
-            size: 22,
-          ),
+        SvgPicture.asset(
+          isDark ? 'web/icons/logo_dark.svg' : 'web/icons/logo_light.svg',
+          width: 38,
+          height: 38,
         ),
         const SizedBox(width: 12),
         Column(
