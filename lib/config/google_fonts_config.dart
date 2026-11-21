@@ -1,8 +1,8 @@
 class FontApiConfig {
   static const String apiKey = String.fromEnvironment(
     'GOOGLE_FONTS_API_KEY',
-    // defaultValue: 'AIzaSyA4hjNT12szf3Zc6IMlY4yq0vemlKVHeMI',
-    defaultValue: '',
+    defaultValue: 'AIzaSyA4hjNT12szf3Zc6IMlY4yq0vemlKVHeMI',
+    // defaultValue: '',
   );
 
   static bool get hasValidApiKey =>

@@ -22,6 +22,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - web/icons/logo.svg
-    - web/icons/logo_light.svg
-    - web/icons/logo_dark.svg
+    - assets/icons/logo_light.svg
+    - assets/icons/logo_dark.svg

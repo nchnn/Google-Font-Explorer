@@ -175,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Row(
       children: [
         SvgPicture.asset(
-          isDark ? 'web/icons/logo_dark.svg' : 'web/icons/logo_light.svg',
+          isDark ? 'assets/icons/logo_dark.svg' : 'assets/icons/logo_light.svg',
           width: 38,
           height: 38,
         ),
